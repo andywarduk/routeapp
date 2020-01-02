@@ -35,6 +35,53 @@ router.route('/').get(async function (req, res) {
   }
 });
 
+// Get routes
+router.route('/').post(async function (req, res) {
+  try {
+    var searchOptions = req.body
+
+    var filter = null
+    var options = null
+
+    // Projection
+    var projection = null
+
+    if (searchOptions.columns) {
+      var columns = searchOptions.columns
+
+      if (Array.isArray(columns)) {
+        projection = columns.reduce((acc, cur) => {
+          acc[cur] = 1
+          return acc
+        }, {})
+      }
+    }
+
+    // Sort
+    if (searchOptions.sort) {
+      options = options || {}
+
+      var col = searchOptions.sort.column
+      var order = searchOptions.sort.ascending ? 1 : -1
+
+      options.sort = {
+        [col]: order
+      }
+    }
+
+    // Do search
+    var routes = await Routes.find(filter, projection, options)
+
+    // Return JSON document
+    res.json(routes)
+
+  } catch(err) {
+    // Errored
+    res.status(400).json(err)
+
+  }
+});
+
 // Add route
 router.route('/add/:id').post(async function (req, res) {
   var id = req.params.id

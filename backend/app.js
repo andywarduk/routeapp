@@ -4,33 +4,63 @@ var mongoose = require('mongoose')
 var bodyParser = require('body-parser')
 var cors = require('cors')
 
-// Server configuration
-var basePath = '/routes'
-var port = 6200
+main()
 
-// Connection to DB
-mongoose.connect('mongodb://mongodb/Routes')
-    .then(() => {
-      console.log('Backend Started')
-    })
-    .catch(err => {
-        console.error('Backend error:', err.stack)
-        process.exit(1)
-    });
+async function main()
+{
+  // Server configuration
+  var basePath = '/routes'
+  var port = 6200
 
-// Routes and backend functions
-var routesRoutes = require('./src/routes/routesRoutes')
+  // Connect to DB
+  var connected = false
+  var connTry = 0
 
-// App Instance
-var app = express()
-app.use(express.static('public'))
-app.use(cors())
-app.use(bodyParser.json({
-  limit: '4096kb'
-}))
-app.use(basePath, routesRoutes)
+  while(!connected && ++connTry <= 20) {
+    try{
+      await mongoose.connect('mongodb://mongodb/Routes')
+      connected = true
+    } catch(err) {
+      console.error("Failed to connect to database", err)
+      await delay(5000)
+    }
+  }
 
-// Execute App
-app.listen(port, () => {
-  console.log('Routes backend running on Port: ', port)
-})
+  if (!connected) {
+    process.exit(1)
+  }
+
+  // Routes and backend functions
+  var routesRoutes = require('./src/routes/routesRoutes')
+
+  // App Instance
+  var app = express()
+  app.use(express.static('public'))
+  app.use(cors())
+  app.use(bodyParser.json({
+    limit: '4096kb'
+  }))
+  app.use(basePath, routesRoutes)
+
+  // Execute App
+  app.listen(port, () => {
+    console.log(`Routes backend running on port ${port}`)
+  })
+}
+
+function delay(ms){
+  var ctr
+  var rej
+
+  var p = new Promise(function (resolve, reject) {
+      ctr = setTimeout(resolve, ms);
+      rej = reject;
+  })
+
+  p.cancel = function() {
+    clearTimeout(ctr)
+    rej(Error("Cancelled"))
+  }
+
+  return p
+}

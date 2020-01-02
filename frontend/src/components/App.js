@@ -1,14 +1,14 @@
 import React from 'react'
-import Heading from './Heading'
-import Filter from './Filter'
-import RouteTable from './RouteTable'
+import FilteredRouteTable from './FilteredRouteTable'
+import { Container, Navbar, NavbarBrand } from 'reactstrap'
 
 function App() {
   return (
     <>
-      <Heading/>
-      <Filter/>
-      <RouteTable/>
+      <Navbar dark={true} color='primary'><NavbarBrand>CCC Route Finder</NavbarBrand></Navbar>
+      <Container fluid>
+        <FilteredRouteTable/>
+      </Container>
     </>
   )
 }
