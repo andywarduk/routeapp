@@ -12,6 +12,7 @@ export default class FilteredRouteTable extends Component {
       routes: [],
       sortCol: 'routeid',
       sortAsc: true,
+      filter: {}
     }
 
     this.routeService = new RouteService()
@@ -25,8 +26,6 @@ export default class FilteredRouteTable extends Component {
   }
 
   requestData = async (newState) => {
-    // TODO filter
-
     var srchState = {
       ...this.state,
       ...newState
@@ -38,7 +37,8 @@ export default class FilteredRouteTable extends Component {
       sort: {
         column: srchState.sortCol,
         ascending: srchState.sortAsc
-      }
+      },
+      filter: srchState.filter
     })
 
     // Process results
@@ -65,6 +65,12 @@ export default class FilteredRouteTable extends Component {
     }
   }
 
+  filterChanged = (filter) => {
+    this.requestData({
+      filter
+    })
+  }
+
   render() {
     var body
 
@@ -81,7 +87,7 @@ export default class FilteredRouteTable extends Component {
 
     return (
       <>
-        <Filter/>
+        <Filter filterCb={this.filterChanged}/>
         {body}
       </>
     )

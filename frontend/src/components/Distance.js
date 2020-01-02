@@ -1,32 +1,14 @@
 import React, { Component } from 'react'
+import convertLength from '../LengthConv'
 
 export default class Distance extends Component {
 
   render() {
-    var distMt = this.props.mt
-    var unit = this.props.unit
-    var dp = this.props.dp
+    var distMt = this.props.mt || 0
+    var unit = this.props.unit || 'mt'
+    var dp = this.props.dp || 0
 
-    var mult = 1
-
-    switch (unit) {
-      case 'ft':
-        mult = 3.28084
-        break
-      case 'km':
-        mult = 1 / 1000
-        break
-      case 'mi':
-        mult = 1 / 1609.34
-        break
-      case 'mt':
-        break
-      default:
-        unit = 'mt'
-        break
-    }
-
-    var dist = distMt * mult
+    var dist = convertLength(distMt, 'mt', unit)
 
     var distString = dist.toFixed(dp)
 

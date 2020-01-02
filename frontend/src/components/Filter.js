@@ -5,43 +5,50 @@ import {
   DropdownMenu, DropdownItem
 } from 'reactstrap'
 
+import convertLength from '../LengthConv'
+
 export default class Filter extends Component {
 
   distUnits = ['mi', 'km']
   elevUnits = ['ft', 'mt']
 
-  // TODO
   presets = {
     orange: {
-
+      distFrom: [20, 'mi'],
+      distTo: [30, 'mi'] 
     },
     green: {
-
+      distFrom: [30, 'mi'],
+      distTo: [60, 'mi'] 
     },
     blue: {
-
+      distFrom: [40, 'mi'],
+      distTo: [100, 'mi'] 
     }
   }
 
   constructor(props) {
     super(props)
 
-    this.state = this.defaultState()
+    this.state = {
+      ...this.defaultState(),
+      distFrom_Unit: this.distUnits[0],
+      distTo_Unit: this.distUnits[0],
+      elevFrom_Unit: this.elevUnits[0],
+      elevTo_Unit: this.elevUnits[0],
+      lastFilter: {}
+    }
   }
 
   defaultState = () => {
     return {
       distFrom_Value: '',
-      distFrom_Unit: this.distUnits[0],
       distFrom_DropDownOpen: false,
       distTo_Value: '',
-      distTo_Unit: this.distUnits[0],
       distTo_DropDownOpen: false,
       elevFrom_Value: '',
-      elevFrom_Unit: this.elevUnits[0],
       elevFrom_DropDownOpen: false,
       elevTo_Value: '',
-      elevTo_Unit: this.elevUnits[0],
       elevTo_DropDownOpen: false
     }
   }
@@ -49,11 +56,17 @@ export default class Filter extends Component {
   loadPreset = (evt, presetName) => {
     var preset = this.presets[presetName]
 
-    var newState = this.defaultState()
+    var newState = {
+      ...this.defaultState()
+    }
 
-    // TODO
+    for (var prop in preset) {
+      newState[prop + '_Value'] = Math.floor(convertLength(preset[prop][0], preset[prop][1], this.state[prop + '_Unit']))
+    }
 
     this.setState(newState)
+
+    this.filter(newState)
 
     evt.preventDefault()
   }
@@ -65,17 +78,26 @@ export default class Filter extends Component {
   }
 
   dropDownChanged = (id, elem) => {
-    this.setState({
+    var newState = {
       [id + '_Unit']: elem
-    })
+    }
+
+    this.setState(newState)
+
+    this.filter(newState)
   }
 
   inputChanged = (id, evt) => {
     var value = parseInt(evt.target.value)
     if (value === 0 || isNaN(value)) value = ''
-    this.setState({
+
+    var newState = {
       [id + '_Value']: value
-    })
+    }
+
+    this.setState(newState)
+
+    this.filter(newState)
   }
 
   unitInput = (placeholder, id, dropdown) => {
@@ -114,6 +136,34 @@ export default class Filter extends Component {
         </InputGroup>
       </Col>
     )
+  }
+
+  filter = (newState) => {
+    var filter = {}
+
+    var state = {
+      ...this.state,
+      ...newState
+    }
+
+    if (state.distFrom_Value !== '')
+      filter.distFrom = convertLength(state.distFrom_Value, state.distFrom_Unit, 'mt')
+    if (state.distTo_Value !== '')
+      filter.distTo = convertLength(state.distTo_Value, state.distTo_Unit, 'mt')
+    if (state.elevFrom_Value !== '')
+      filter.elevFrom = convertLength(state.elevFrom_Value, state.elevFrom_Unit, 'mt')
+    if (state.elevTo_Value !== '')
+      filter.elevTo = convertLength(state.elevTo_Value, state.elevTo_Unit, 'mt')
+
+    if (JSON.stringify(filter) !== JSON.stringify(state.filter)) {
+      this.setState({
+        lastFilter: filter
+      })
+
+      if (this.props.filterCb) {
+        this.props.filterCb(filter)
+      }
+    }
   }
 
   render() {
