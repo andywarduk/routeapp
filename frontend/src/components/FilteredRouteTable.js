@@ -72,23 +72,37 @@ export default class FilteredRouteTable extends Component {
   }
 
   render() {
-    var body
+    var count
+    var table = null
 
-    if (Array.isArray(this.state.routes) && this.state.routes.length > 0) {
-      body = <RouteTable
-        routes={this.state.routes}
+    var routes = this.state.routes || []
+
+    switch (routes.length) {
+      case 0:
+        count = 'No rows found'
+        break
+      case 1:
+        count = '1 row found'
+        break
+      default:
+        count = `${routes.length} rows found`
+        break
+    }
+
+    if (routes.length > 0) {
+      table = <RouteTable
+        routes={routes}
         sortCol={this.state.sortCol}
         sortAsc={this.state.sortAsc}
         sortCb={this.sort}
       />
-    } else {
-      body = <p>No rows</p>
     }
 
     return (
       <>
         <Filter filterCb={this.filterChanged}/>
-        {body}
+        <p>{count}</p>
+        {table}
       </>
     )
   }

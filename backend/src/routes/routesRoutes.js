@@ -40,8 +40,50 @@ router.route('/').post(async function (req, res) {
   try {
     var searchOptions = req.body
 
-    var filter = null
+    var filter = {}
     var options = null
+
+    // Filter
+    if (searchOptions.filter) {
+      var srchFilter = searchOptions.filter
+
+      // Text
+      if (srchFilter.srchText && srchFilter.srchText != '') {
+        filter.$text = {
+          $search: srchFilter.srchText
+        }
+      }
+
+      // Distance
+      if (srchFilter.distFrom && srchFilter.distFrom > 0) {
+        filter.distance = {
+          ...filter.distance,
+          $gte: srchFilter.distFrom
+        }
+      }
+
+      if (srchFilter.distTo && srchFilter.distTo > 0) {
+        filter.distance = {
+          ...filter.distance,
+          $lte: srchFilter.distTo
+        }
+      }
+
+      // Elevation
+      if (srchFilter.elevFrom && srchFilter.elevFrom > 0) {
+        filter.elevation_gain = {
+          ...filter.elevation_gain,
+          $gte: srchFilter.elevFrom
+        }
+      }
+
+      if (srchFilter.elevTo && srchFilter.elevTo > 0) {
+        filter.elevation_gain = {
+          ...filter.elevation_gain,
+          $lte: srchFilter.elevTo
+        }
+      }
+    }
 
     // Projection
     var projection = null

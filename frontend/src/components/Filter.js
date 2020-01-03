@@ -24,7 +24,8 @@ export default class Filter extends Component {
     blue: {
       distFrom: [40, 'mi'],
       distTo: [100, 'mi'] 
-    }
+    },
+    clear: {}
   }
 
   constructor(props) {
@@ -32,6 +33,7 @@ export default class Filter extends Component {
 
     this.state = {
       ...this.defaultState(),
+      srchText: '',
       distFrom_Unit: this.distUnits[0],
       distTo_Unit: this.distUnits[0],
       elevFrom_Unit: this.elevUnits[0],
@@ -100,6 +102,16 @@ export default class Filter extends Component {
     this.filter(newState)
   }
 
+  textChanged = (evt) => {
+    var newState = {
+      srchText: evt.target.value
+    }
+
+    this.setState(newState)
+
+    this.filter(newState)
+  }
+
   unitInput = (placeholder, id, dropdown) => {
     var menu = dropdown.map((elem, idx) => {
       return (
@@ -146,6 +158,9 @@ export default class Filter extends Component {
       ...newState
     }
 
+    if (state.srchText !== '')
+      filter.srchText = state.srchText
+
     if (state.distFrom_Value !== '')
       filter.distFrom = convertLength(state.distFrom_Value, state.distFrom_Unit, 'mt')
     if (state.distTo_Value !== '')
@@ -171,10 +186,21 @@ export default class Filter extends Component {
       <>
         <Form>
           <Row>
+            <Col className='mt-2' xs='12'>
+              <Input
+                placeholder='Search Text'
+                id='srchText'
+                onChange={(evt) => this.textChanged(evt)}
+                value={this.state.srchText}
+              />
+            </Col>
+          </Row>
+          <Row>
             <Col className='mt-3' xs='12'>
               <Button className='ml-0' color='warning' onClick={(evt) => this.loadPreset(evt, 'orange')}>Orange</Button>
               <Button className='ml-1' color='success' onClick={(evt) => this.loadPreset(evt, 'green')}>Green</Button>
               <Button className='ml-1' color='primary' onClick={(evt) => this.loadPreset(evt, 'blue')}>Blue / Red</Button>
+              <Button className='ml-1' onClick={(evt) => this.loadPreset(evt, 'clear')}>Reset</Button>
             </Col>
           </Row>
           <Row>

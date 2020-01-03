@@ -20,4 +20,9 @@ var Routes = new Schema({
   strict: false
 })
 
+Routes.index({
+  name: "text",
+  description: "text"
+})
+
 module.exports = mongoose.model('Routes', Routes)
