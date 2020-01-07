@@ -1,0 +1,32 @@
+version: '2'
+
+services:
+  mongodb-dev:
+    image: "mongo"
+    ports:
+     - "27017:27017"
+    volumes:
+     - ./data/db:/data/db
+     - ./data/configdb:/data/configdb
+ 
+  backend-dev:
+    build: 
+      context: ./backend/
+      dockerfile: Dockerfile-dev
+    ports:
+      - "6200:6200"
+    volumes:
+      - ./backend:/usr/src/app
+    depends_on:
+      - mongodb-dev
+
+  frontend-dev:
+    build: 
+      context: ./frontend/
+      dockerfile: Dockerfile-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/usr/src/app
+    depends_on:
+      - backend-dev

@@ -6,7 +6,7 @@ export default class RouteService {
     var result
 
     try {
-      var res = await axios.get('http://localhost:6200/routes/')
+      var res = await axios.get('/routes/')
 
       result = {
         ok: true,
@@ -28,7 +28,7 @@ export default class RouteService {
     var result
 
     try {
-      var res = await axios.post('http://localhost:6200/routes/', options)
+      var res = await axios.post('/routes/', options)
 
       result = {
         ok: true,

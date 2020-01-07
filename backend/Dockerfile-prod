@@ -1,0 +1,22 @@
+# Build environment
+FROM node:latest as build
+
+WORKDIR /usr/src/app
+
+COPY package.json .
+RUN npm install --silent
+RUN npm install -g nodemon
+
+
+# Production environment
+FROM build
+
+WORKDIR /usr/src/app
+
+COPY . .
+
+EXPOSE 6200
+
+ENV NODE_ENV production
+
+CMD [ "npm", "start" ]

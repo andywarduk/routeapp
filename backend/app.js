@@ -16,9 +16,17 @@ async function main()
   var connected = false
   var connTry = 0
 
+  var dbHost
+
+  if (process.env.NODE_ENV != 'production') {
+    dbHost = 'mongodb-dev'
+  } else {
+    dbHost = 'mongodb-prod'
+  }
+
   while(!connected && ++connTry <= 20) {
     try{
-      await mongoose.connect('mongodb://mongodb/Routes')
+      await mongoose.connect(`mongodb://${dbHost}/Routes`)
       connected = true
     } catch(err) {
       console.error("Failed to connect to database", err)
@@ -44,7 +52,7 @@ async function main()
 
   // Execute App
   app.listen(port, () => {
-    console.log(`Routes backend running on port ${port}`)
+    console.log(`Routes backend running on port ${port} (${process.env.NODE_ENV})`)
   })
 }
 

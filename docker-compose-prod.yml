@@ -1,0 +1,28 @@
+version: '2'
+
+services:
+  mongodb-prod:
+    image: "mongo"
+    expose:
+     - "27017"
+    volumes:
+     - ./data/db:/data/db
+     - ./data/configdb:/data/configdb
+ 
+  backend-prod:
+    build: 
+      context: ./backend/
+      dockerfile: Dockerfile-prod
+    expose:
+      - "6200"
+    depends_on:
+      - mongodb-prod
+
+  frontend-prod:
+    build: 
+      context: ./frontend/
+      dockerfile: Dockerfile-prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend-prod
