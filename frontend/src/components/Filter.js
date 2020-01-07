@@ -222,7 +222,6 @@ export default class Filter extends Component {
             {this.unitInput('Elevation To', 'elevTo', this.elevUnits)}
           </Row>
         </Form>
-        <br/>
       </>
     )
 

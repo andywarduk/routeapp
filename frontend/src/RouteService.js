@@ -35,8 +35,6 @@ export default class RouteService {
         data: res.data
       }
     } catch (err) {
-      console.log(err)
-
       result = {
         ok: false,
         data: err

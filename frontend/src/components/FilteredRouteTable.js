@@ -1,4 +1,8 @@
 import React, { Component } from 'react'
+import { Row, Col } from 'reactstrap'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
+
 import RouteTable from './RouteTable'
 import RouteService from '../RouteService'
 import Filter from './Filter'
@@ -9,7 +13,10 @@ export default class FilteredRouteTable extends Component {
     super(props)
 
     this.state = {
+      loading: 0,
+      request: 0,
       routes: [],
+      error: null,
       sortCol: 'routeid',
       sortAsc: true,
       filter: {}
@@ -26,6 +33,17 @@ export default class FilteredRouteTable extends Component {
   }
 
   requestData = async (newState) => {
+    // Allocate request number
+    var requestNo = this.state.request + 1
+
+    // Set state
+    this.setState({
+      ...newState,
+      loading: this.state.loading + 1,
+      request: requestNo
+    })
+
+    // Build full state for search
     var srchState = {
       ...this.state,
       ...newState
@@ -42,10 +60,23 @@ export default class FilteredRouteTable extends Component {
     })
 
     // Process results
-    if (res.ok) {
+    if (requestNo >= this.state.request) {
+      if (res.ok) {
+        this.setState({
+          routes: res.data,
+          error: null,
+          loading: Math.max(0, this.state.loading - 1)
+        })
+      } else {
+        this.setState({
+          routes: [],
+          error: res.data,
+          loading: Math.max(0, this.state.loading - 1)
+        })
+      }
+    } else {
       this.setState({
-        ...newState,
-        routes: res.data
+        loading: Math.max(0, this.state.loading - 1)
       })
     }
   }
@@ -77,16 +108,20 @@ export default class FilteredRouteTable extends Component {
 
     var routes = this.state.routes || []
 
-    switch (routes.length) {
-      case 0:
-        count = 'No rows found'
-        break
-      case 1:
-        count = '1 row found'
-        break
-      default:
-        count = `${routes.length} rows found`
-        break
+    if (this.state.error) {
+      count = this.state.error.toString()
+    } else {
+      switch (routes.length) {
+        case 0:
+          count = 'No routes found'
+          break
+        case 1:
+          count = '1 route found'
+          break
+        default:
+          count = `${routes.length} routes found`
+          break
+      }
     }
 
     if (routes.length > 0) {
@@ -98,10 +133,16 @@ export default class FilteredRouteTable extends Component {
       />
     }
 
+    var spinner = null
+
+    if (this.state.loading > 0) spinner = <FontAwesomeIcon icon={faSpinner} spin={true} />
+
     return (
       <>
         <Filter filterCb={this.filterChanged}/>
-        <p>{count}</p>
+        <Row className='mt-2'>
+          <Col>{count}&nbsp;{spinner}</Col>
+        </Row>
         {table}
       </>
     )

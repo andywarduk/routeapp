@@ -44,7 +44,7 @@ export default class RouteTable extends Component {
     })
 
     return (
-      <Table size='sm'>
+      <Table size='sm' className='mt-2'>
         <thead>
           <tr>
             {this.renderHeadingCell('routeid', 'Link', 1)}
