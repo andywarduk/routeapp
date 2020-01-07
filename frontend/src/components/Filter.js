@@ -68,7 +68,7 @@ export default class Filter extends Component {
 
     this.setState(newState)
 
-    this.filter(newState)
+    this.filter(newState, false)
 
     evt.preventDefault()
   }
@@ -86,7 +86,7 @@ export default class Filter extends Component {
 
     this.setState(newState)
 
-    this.filter(newState)
+    this.filter(newState, false)
   }
 
   inputChanged = (id, evt) => {
@@ -99,7 +99,7 @@ export default class Filter extends Component {
 
     this.setState(newState)
 
-    this.filter(newState)
+    this.filter(newState, true)
   }
 
   textChanged = (evt) => {
@@ -109,7 +109,7 @@ export default class Filter extends Component {
 
     this.setState(newState)
 
-    this.filter(newState)
+    this.filter(newState, true)
   }
 
   unitInput = (placeholder, id, dropdown) => {
@@ -150,7 +150,7 @@ export default class Filter extends Component {
     )
   }
 
-  filter = (newState) => {
+  filter = (newState, debounce) => {
     var filter = {}
 
     var state = {
@@ -176,7 +176,7 @@ export default class Filter extends Component {
       })
 
       if (this.props.filterCb) {
-        this.props.filterCb(filter)
+        this.props.filterCb(filter, debounce)
       }
     }
   }

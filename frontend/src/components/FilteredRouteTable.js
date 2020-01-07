@@ -1,13 +1,15 @@
 import React, { Component } from 'react'
 import { Row, Col } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { faSpinner, faKeyboard } from '@fortawesome/free-solid-svg-icons'
 
 import RouteTable from './RouteTable'
 import RouteService from '../RouteService'
 import Filter from './Filter'
 
 export default class FilteredRouteTable extends Component {
+
+  debounceTime = 400 // 0.4 second debounce
 
   constructor(props) {
     super(props)
@@ -96,10 +98,26 @@ export default class FilteredRouteTable extends Component {
     }
   }
 
-  filterChanged = (filter) => {
-    this.requestData({
-      filter
-    })
+  filterChanged = (filter, debounce) => {
+    if (this.state.debounceTimer) {
+      clearTimeout(this.state.debounceTimer)
+    }
+
+    if (debounce) {
+      // Debounced request
+      this.setState({
+        debounceTimer: setTimeout(() => {
+          this.filterChanged(filter, false)
+        }, this.debounceTime),
+        filter
+      })
+    } else {
+      // Immediate request
+      this.requestData({
+        debounceTimer: null,
+        filter
+      })
+    }
   }
 
   render() {
@@ -135,7 +153,11 @@ export default class FilteredRouteTable extends Component {
 
     var spinner = null
 
-    if (this.state.loading > 0) spinner = <FontAwesomeIcon icon={faSpinner} spin={true} />
+    if (this.state.loading > 0) {
+      spinner = <FontAwesomeIcon icon={faSpinner} spin={true}/>
+    } else if (this.state.debounceTimer) {
+      spinner = <FontAwesomeIcon icon={faKeyboard}/>
+    }
 
     return (
       <>
