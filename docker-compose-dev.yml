@@ -6,8 +6,8 @@ services:
     ports:
      - "27017:27017"
     volumes:
-     - ./data/db:/data/db
-     - ./data/configdb:/data/configdb
+     - data-db-dev:/data/db
+     - data-configdb-dev:/data/configdb
  
   backend-dev:
     build: 
@@ -30,3 +30,7 @@ services:
       - ./frontend:/usr/src/app
     depends_on:
       - backend-dev
+
+volumes:
+  data-db-dev:
+  data-configdb-dev:

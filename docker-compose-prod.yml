@@ -6,8 +6,8 @@ services:
     expose:
      - "27017"
     volumes:
-     - ./data/db:/data/db
-     - ./data/configdb:/data/configdb
+     - data-db-prod:/data/db
+     - data-configdb-prod:/data/configdb
  
   backend-prod:
     build: 
@@ -26,3 +26,7 @@ services:
       - "80:80"
     depends_on:
       - backend-prod
+
+volumes:
+  data-db-prod:
+  data-configdb-prod:
