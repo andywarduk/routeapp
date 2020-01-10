@@ -6,3 +6,5 @@ https://medium.com/codebase/mern-ep03-developing-the-front-end-with-nodejs-react
 
 docker-compose -f <composefile> build
 docker-compose -f <composefile> up
+
+add --pull to update to latest

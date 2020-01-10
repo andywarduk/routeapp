@@ -1,4 +1,4 @@
-function getMtMult(unit)
+function getMetreMult(unit)
 {
   var mult
 
@@ -12,7 +12,7 @@ function getMtMult(unit)
     case 'mi':
       mult = 1 / 1609.34
       break
-    case 'mt':
+    case 'm':
       mult = 1
       break
     default:
@@ -27,11 +27,11 @@ function convertLength(lengthIn, unitFrom, unitTo)
   var mult
 
   // Convert to metres
-  mult = getMtMult(unitFrom)
+  mult = getMetreMult(unitFrom)
   var metres = lengthIn / mult
 
   // Convert to target unit
-  mult = getMtMult(unitTo)
+  mult = getMetreMult(unitTo)
   var lengthOut = metres * mult
 
   return lengthOut

@@ -19,16 +19,16 @@ export default class RouteRow extends Component {
         <td>{this.props.route.name}</td>
         <td>{this.props.route.description}</td>
         <td className='text-right text-nowrap'>
-          <Distance mt={this.props.route.distance} unit='mi' dp='1'/>
+          <Distance m={this.props.route.distance} unit='mi' dp='1'/>
         </td>
         <td className='text-right text-nowrap'>
-          <Distance mt={this.props.route.distance} unit='km' dp='1'/>
+          <Distance m={this.props.route.distance} unit='km' dp='1'/>
         </td>
         <td className='text-right text-nowrap'>
-          <Distance mt={this.props.route.elevation_gain} unit='mt' dp='0'/>
+          <Distance m={this.props.route.elevation_gain} unit='m' dp='0'/>
         </td>
         <td className='text-right text-nowrap'>
-          <Distance mt={this.props.route.elevation_gain} unit='ft' dp='0'/>
+          <Distance m={this.props.route.elevation_gain} unit='ft' dp='0'/>
         </td>
         <td className='text-right text-nowrap'>
           <TimeSpan secs={this.props.route.estimated_moving_time} minUnit='m' />

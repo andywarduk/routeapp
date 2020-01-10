@@ -10,7 +10,7 @@ import convertLength from '../LengthConv'
 export default class Filter extends Component {
 
   distUnits = ['mi', 'km']
-  elevUnits = ['ft', 'mt']
+  elevUnits = ['ft', 'm']
 
   presets = {
     orange: {
@@ -125,8 +125,8 @@ export default class Filter extends Component {
     })
 
     return (
-      <Col xs='6' md='3'>
-        <InputGroup>
+      <Col className='col-12 col-sm-6 col-md-4 col-lg-3'>
+        <InputGroup className='mt-1 mb-1' >
           <Input
             placeholder={placeholder}
             id={id}
@@ -162,13 +162,13 @@ export default class Filter extends Component {
       filter.srchText = state.srchText
 
     if (state.distFrom_Value !== '')
-      filter.distFrom = convertLength(state.distFrom_Value, state.distFrom_Unit, 'mt')
+      filter.distFrom = convertLength(state.distFrom_Value, state.distFrom_Unit, 'm')
     if (state.distTo_Value !== '')
-      filter.distTo = convertLength(state.distTo_Value, state.distTo_Unit, 'mt')
+      filter.distTo = convertLength(state.distTo_Value, state.distTo_Unit, 'm')
     if (state.elevFrom_Value !== '')
-      filter.elevFrom = convertLength(state.elevFrom_Value, state.elevFrom_Unit, 'mt')
+      filter.elevFrom = convertLength(state.elevFrom_Value, state.elevFrom_Unit, 'm')
     if (state.elevTo_Value !== '')
-      filter.elevTo = convertLength(state.elevTo_Value, state.elevTo_Unit, 'mt')
+      filter.elevTo = convertLength(state.elevTo_Value, state.elevTo_Unit, 'm')
 
     if (JSON.stringify(filter) !== JSON.stringify(state.filter)) {
       this.setState({
@@ -186,8 +186,9 @@ export default class Filter extends Component {
       <>
         <Form>
           <Row>
-            <Col className='mt-2' xs='12'>
+            <Col className='mt-1 col-12'>
               <Input
+                className='mt-1 mb-1'
                 placeholder='Search Text'
                 id='srchText'
                 onChange={(evt) => this.textChanged(evt)}
@@ -196,16 +197,16 @@ export default class Filter extends Component {
             </Col>
           </Row>
           <Row>
-            <Col className='mt-3' xs='12'>
-              <Button className='ml-0' color='warning' onClick={(evt) => this.loadPreset(evt, 'orange')}>Orange</Button>
-              <Button className='ml-1' color='success' onClick={(evt) => this.loadPreset(evt, 'green')}>Green</Button>
-              <Button className='ml-1' color='primary' onClick={(evt) => this.loadPreset(evt, 'blue')}>Blue / Red</Button>
-              <Button className='ml-1' onClick={(evt) => this.loadPreset(evt, 'clear')}>Reset</Button>
+            <Col className='col-12'>
+              <Button className='mt-1 mb-1 ml-0' color='warning' onClick={(evt) => this.loadPreset(evt, 'orange')}>Orange</Button>
+              <Button className='mt-1 mb-1 ml-1' color='success' onClick={(evt) => this.loadPreset(evt, 'green')}>Green</Button>
+              <Button className='mt-1 mb-1 ml-1' color='primary' onClick={(evt) => this.loadPreset(evt, 'blue')}>Blue / Red</Button>
+              <Button className='mt-1 mb-1 ml-1' onClick={(evt) => this.loadPreset(evt, 'clear')}>Reset</Button>
             </Col>
           </Row>
           <Row>
-            <Col className='mt-2' xs='12'>
-              <Label for='distFrom'>Distance</Label>
+            <Col className='col-12'>
+              <Label className='mt-1 mb-1' for='distFrom'>Distance</Label>
             </Col>
           </Row>
           <Row>
@@ -213,8 +214,8 @@ export default class Filter extends Component {
             {this.unitInput('Distance To', 'distTo', this.distUnits)}
           </Row>
           <Row>
-            <Col className='mt-2' xs='12'>
-              <Label for='elevFrom'>Elevation</Label>
+            <Col className='col-12'>
+              <Label className='mt-1 mb-1' for='elevFrom'>Elevation</Label>
             </Col>
           </Row>
           <Row>

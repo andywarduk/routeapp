@@ -1,6 +1,6 @@
 import React from 'react'
 import FilteredRouteTable from './FilteredRouteTable'
-import { Container, Navbar, NavbarBrand, NavItem } from 'reactstrap'
+import { Container, Navbar, NavbarBrand } from 'reactstrap'
 
 function App() {
   var devMsg
@@ -12,7 +12,10 @@ function App() {
   return (
     <>
       <Navbar dark={true} color='primary'>
-        <NavbarBrand><img src='/logow32.png'/>&nbsp;&nbsp;CCC Route Finder{devMsg}</NavbarBrand>
+        <NavbarBrand>
+          <img src='/logow32.png' alt='' className='mr-1'/>
+          <span className='ml-1'>CCC Route Finder{devMsg}</span>
+        </NavbarBrand>
       </Navbar>
       <Container fluid>
         <FilteredRouteTable/>
