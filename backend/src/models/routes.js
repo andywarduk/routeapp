@@ -1,7 +1,7 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 
-// schema
+// Schema
 var Routes = new Schema({
   routeid: {
     type: Number,
@@ -12,10 +12,7 @@ var Routes = new Schema({
   distance: Number,
   elevation_gain: Number,
   estimated_moving_time: Number,
-  athlete: {
-    firstname: String,
-    lastname: String
-  }
+  updatedAt: String
 }, {
   strict: false
 })

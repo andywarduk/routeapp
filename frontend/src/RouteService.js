@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { buildResponse, buildErrorResponse } from './Response'
 
 export default class RouteService {
 
@@ -6,19 +7,10 @@ export default class RouteService {
     var result
 
     try {
-      var res = await axios.get('/routes/')
-
-      result = {
-        ok: true,
-        data: res.data
-      }
+      var res = await axios.get('/api/routes/')
+      result = buildResponse(res)
     } catch (err) {
-      console.log(err)
-
-      result = {
-        ok: false,
-        data: err
-      }
+      result = buildErrorResponse(err)
     }
 
     return result
@@ -28,17 +20,44 @@ export default class RouteService {
     var result
 
     try {
-      var res = await axios.post('/routes/', options)
-
-      result = {
-        ok: true,
-        data: res.data
-      }
+      var res = await axios.post('/api/routes/', options)
+      result = buildResponse(res)
     } catch (err) {
-      result = {
-        ok: false,
-        data: err
-      }
+      result = buildErrorResponse(err)
+    }
+
+    return result
+  }
+
+  async add(bearer, routeid, route) {
+    var result
+
+    try {
+      var res = await axios.post(`/api/routes/add/${routeid}`, route, {
+        headers: {
+          'Authorization': `Bearer ${bearer}`
+        }
+      })
+      result = buildResponse(res)
+    } catch (err) {
+      result = buildErrorResponse(res)
+    }
+
+    return result
+  }
+
+  async replace(bearer, routeid, route) {
+    var result
+
+    try {
+      var res = await axios.post(`/api/routes/replace/${routeid}`, route, {
+        headers: {
+          'Authorization': `Bearer ${bearer}`
+        }
+      })
+      result = buildResponse(res)
+    } catch (err) {
+      result = buildErrorResponse(res)
     }
 
     return result

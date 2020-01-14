@@ -3,13 +3,19 @@ var express = require('express')
 var mongoose = require('mongoose')
 var bodyParser = require('body-parser')
 var cors = require('cors')
+var dotenv = require('dotenv')
+
+var setupJwtAuth = require('./src/auth/jwtAuth')
 
 main()
 
 async function main()
 {
+  // Load env
+  dotenv.config()
+
   // Server configuration
-  var basePath = '/routes'
+  var basePath = '/api'
   var port = 6200
 
   // Connect to DB
@@ -17,6 +23,12 @@ async function main()
   var connTry = 0
 
   var dbHost
+
+  // Set up mongoose
+  mongoose.set('useNewUrlParser', true);
+  mongoose.set('useFindAndModify', false);
+  mongoose.set('useCreateIndex', true);
+  mongoose.set('useUnifiedTopology', true);
 
   if (process.env.NODE_ENV != 'production') {
     dbHost = 'mongodb-dev'
@@ -38,8 +50,13 @@ async function main()
     process.exit(1)
   }
 
+  // Set up jwt auth
+  setupJwtAuth()
+
   // Routes and backend functions
   var routesRoutes = require('./src/routes/routesRoutes')
+  var authRoutes = require('./src/auth/authRoutes')
+  var stravaRoutes = require('./src/strava/stravaRoutes')
 
   // App Instance
   var app = express()
@@ -49,6 +66,8 @@ async function main()
     limit: '4096kb'
   }))
   app.use(basePath, routesRoutes)
+  app.use(basePath, authRoutes)
+  app.use(basePath, stravaRoutes)
 
   // Execute App
   app.listen(port, () => {

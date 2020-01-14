@@ -1,12 +1,15 @@
 var express = require('express')
-var app = express()
+var passport = require('passport')
+
+var response = require('../response')
+
 var router = express.Router()
 
-// Schema
+// Routes schema
 var Routes = require('../models/routes')
 
 // Get specific route
-router.route('/:id').get(async function (req, res) {
+router.route('/routes/:id').get(async function (req, res) {
   try {
     var id = req.params.id;
 
@@ -17,26 +20,26 @@ router.route('/:id').get(async function (req, res) {
     res.json(doc)
 
   } catch (err) {
-    res.status(400).json(err)
+    response.errorResponse(res, err)
 
   }
-});
+})
 
 // Get all routes
-router.route('/').get(async function (req, res) {
+router.route('/routes').get(async function (req, res) {
   try {
     var routes = await Routes.find()
 
     res.json(routes)
 
   } catch(err) {
-    res.status(400).json(err)
+    response.errorResponse(res, err)
 
   }
-});
+})
 
 // Get routes
-router.route('/').post(async function (req, res) {
+router.route('/routes').post(async function (req, res) {
   try {
     var searchOptions = req.body
 
@@ -118,14 +121,13 @@ router.route('/').post(async function (req, res) {
     res.json(routes)
 
   } catch(err) {
-    // Errored
-    res.status(400).json(err)
+    response.errorResponse(res, err)
 
   }
-});
+})
 
 // Add route
-router.route('/add/:id').post(async function (req, res) {
+router.route('/routes/add/:id').post(passport.authenticate('jwt', { session: false }), async function (req, res) {
   var id = req.params.id
 
   var doc = {
@@ -136,18 +138,44 @@ router.route('/add/:id').post(async function (req, res) {
   var item = new Routes(doc);
 
   try {
-    var saved = await item.save()
+    await item.save()
 
-    res.json(`Saved route ${id}`)
+    response.msgResponse(res, `Saved route ${id}`)
 
   } catch (err) {
-    res.status(400).json(err)
+    response.errorResponse(res, err)
 
   }
-});
+
+})
+
+// Replace route
+router.route('/routes/replace/:id').put(passport.authenticate('jwt', { session: false }), async function (req, res) {
+  var id = req.params.id
+
+  var doc = {
+    ...req.body,
+    routeid: id
+  }
+
+  try {
+    await Routes.findOneAndUpdate({
+      routeid: id
+    }, doc, {
+      overwrite: true
+    })
+
+    response.msgResponse(res, `Replaced route ${id}`)
+
+  } catch (err) {
+    response.errorResponse(res, err)
+
+  }
+
+})
 
 // Delete route
-router.route('/delete/:id').delete(async function (req, res) {
+router.route('/routes/delete/:id').delete(passport.authenticate('jwt', { session: false }), async function (req, res) {
   var id = req.params.id
 
   try {
@@ -155,10 +183,10 @@ router.route('/delete/:id').delete(async function (req, res) {
       routeid: id
     })
 
-    res.json(`Deleted route ${id}`)
+    response.msgResponse(res, `Deleted route ${id}`)
 
   } catch (err) {
-    res.status(400).json(err)
+    response.errorResponse(res, err)
 
   }
 
