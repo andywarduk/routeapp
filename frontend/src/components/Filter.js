@@ -151,6 +151,8 @@ export default class Filter extends Component {
   }
 
   filter = (newState, debounce) => {
+    var { filterCb } = this.props
+
     var filter = {}
 
     var state = {
@@ -175,13 +177,15 @@ export default class Filter extends Component {
         lastFilter: filter
       })
 
-      if (this.props.filterCb) {
-        this.props.filterCb(filter, debounce)
+      if (filterCb) {
+        filterCb(filter, debounce)
       }
     }
   }
 
   render() {
+    var { srchText } = this.state
+
     return (
       <>
         <Form>
@@ -192,7 +196,7 @@ export default class Filter extends Component {
                 placeholder='Search Text'
                 id='srchText'
                 onChange={(evt) => this.textChanged(evt)}
-                value={this.state.srchText}
+                value={srchText}
               />
             </Col>
           </Row>

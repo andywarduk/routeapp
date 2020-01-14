@@ -3,8 +3,7 @@ import React, { Component } from 'react'
 export default class TimeSpan extends Component {
 
   render() {
-    var secs = this.props.secs
-    var minUnit = this.props.minUnit
+    var { secs, minUnit } = this.props
 
     var time
 

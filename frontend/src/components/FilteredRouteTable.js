@@ -84,10 +84,12 @@ export default class FilteredRouteTable extends Component {
   }
 
   sort = (col) => {
-    if (col === this.state.sortCol) {
+    var { sortCol, sortAsc } = this.state
+
+    if (col === sortCol) {
       // Same column - reverse order
       this.requestData({
-        sortAsc: !this.state.sortAsc
+        sortAsc: !sortAsc
       })
     } else {
       // New column
@@ -99,8 +101,10 @@ export default class FilteredRouteTable extends Component {
   }
 
   filterChanged = (filter, debounce) => {
-    if (this.state.debounceTimer) {
-      clearTimeout(this.state.debounceTimer)
+    var { debounceTimer } = this.state
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
     }
 
     if (debounce) {
@@ -121,13 +125,15 @@ export default class FilteredRouteTable extends Component {
   }
 
   render() {
+    var { routes, loading, error, sortCol, sortAsc, debounceTimer } = this.state
+
     var count
     var table = null
 
-    var routes = this.state.routes || []
+    routes = routes || []
 
-    if (this.state.error) {
-      count = this.state.error.toString()
+    if (error) {
+      count = error.toString()
     } else {
       switch (routes.length) {
         case 0:
@@ -145,17 +151,17 @@ export default class FilteredRouteTable extends Component {
     if (routes.length > 0) {
       table = <RouteTable
         routes={routes}
-        sortCol={this.state.sortCol}
-        sortAsc={this.state.sortAsc}
+        sortCol={sortCol}
+        sortAsc={sortAsc}
         sortCb={this.sort}
       />
     }
 
     var spinner = null
 
-    if (this.state.loading > 0) {
+    if (loading > 0) {
       spinner = <FontAwesomeIcon icon={faSpinner} spin={true}/>
-    } else if (this.state.debounceTimer) {
+    } else if (debounceTimer) {
       spinner = <FontAwesomeIcon icon={faKeyboard}/>
     }
 

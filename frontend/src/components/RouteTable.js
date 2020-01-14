@@ -1,25 +1,30 @@
 import React, { Component } from 'react'
-import RouteRow from './RouteRow'
 import { Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSortUp } from '@fortawesome/free-solid-svg-icons'
 import { faSortDown } from '@fortawesome/free-solid-svg-icons'
 import { faSort } from '@fortawesome/free-solid-svg-icons'
 
+import RouteRow from './RouteRow'
+
 export default class RouteTable extends Component {
 
   sort = (col) => {
-    this.props.sortCb(col)
+    var { sortCb } = this.props
+
+    sortCb(col)
   }
 
   renderHeadingCell = (col, desc, span) => {
+    var { sortCol, sortAsc } = this.props
+
     var th
 
     if (col) {
       var icon
 
-      if (col === this.props.sortCol) {
-        if (this.props.sortAsc) {
+      if (col === sortCol) {
+        if (sortAsc) {
           icon = <FontAwesomeIcon icon={faSortDown} />
         } else {
           icon = <FontAwesomeIcon icon={faSortUp} />
@@ -39,7 +44,9 @@ export default class RouteTable extends Component {
   }
 
   render() {
-    var rows = this.props.routes.map(r => {
+    var { routes } = this.props
+
+    var rows = routes.map(r => {
       return <RouteRow route={r} key={r.routeid} />
     })
 
