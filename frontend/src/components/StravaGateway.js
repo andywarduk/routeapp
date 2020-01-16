@@ -3,7 +3,6 @@ import {
   withRouter,
   Redirect
 } from 'react-router-dom'
-import { Row, Col } from 'reactstrap'
 import queryString from 'query-string'
 
 import StravaContext from './StravaContext'
@@ -99,9 +98,11 @@ class StravaGateway extends Component {
         })
         
         content = (
-          <Row>
-            <Col>Redirecting to Strava for authentication...</Col>
-          </Row>
+          <div className='row'>
+            <div className='row'>
+              Redirecting to Strava for authentication...
+            </div>
+          </div>
         )
 
         break
@@ -109,9 +110,11 @@ class StravaGateway extends Component {
       case this.AUTHSTAGE_TOKEN:
         // Got token - finish authentication
         content = (
-          <Row>
-            <Col>Authenticating...</Col>
-          </Row>
+          <div className='row'>
+            <div className='row'>
+              Authenticating...
+            </div>
+          </div>
         )
 
         break
@@ -136,9 +139,11 @@ class StravaGateway extends Component {
 
       default:
         content = (
-          <Row>
-            <Col>Authentication failure</Col>
-          </Row>
+          <div className='row'>
+            <div className='row'>
+              Authentication failure
+            </div>
+          </div>
         )
 
         break

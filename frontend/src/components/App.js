@@ -4,7 +4,6 @@ import {
   Switch,
   Route
 } from 'react-router-dom'
-import { Container, Navbar, NavbarBrand } from 'reactstrap'
 
 import FilteredRouteTable from './FilteredRouteTable'
 import StravaGateway from './StravaGateway'
@@ -20,14 +19,36 @@ function App() {
   return (
     <Router>
 
-      <Navbar dark={true} color='primary'>
-        <NavbarBrand>
+      <nav className="navbar navbar-dark bg-primary navbar-expand-md">
+        <a href='/'>
           <img src='/logow32.png' alt='' className='mr-1'/>
-          <span className='ml-1'>CCC Route Finder{devMsg}</span>
-        </NavbarBrand>
-      </Navbar>
+          <span style={{verticalAlign: 'middle'}} className='navbar-brand ml-1 mb-0 mt-0 h1'>CCC Route Finder{devMsg}</span>
+        </a>
 
-      <Container fluid>
+        <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span className="navbar-toggler-icon"></span>
+        </button>
+
+        <div className="collapse navbar-collapse" id="navbarNav">
+          <ul className="ml-auto navbar-nav">
+            <li className="nav-item active">
+              <a className="nav-link" href="/">Home <span className="sr-only">(current)</span></a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="/def">Features</a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="/ghi">Pricing</a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link disabled" href="/jkl" tabIndex="-1" aria-disabled="true">Disabled</a>
+            </li>
+          </ul>
+        </div>
+  
+      </nav>
+
+      <div className='container-fluid'>
         <Switch>
           <Route path='/' exact>
             <FilteredRouteTable/>
@@ -38,7 +59,7 @@ function App() {
             </StravaGateway>
           </Route>
         </Switch>
-      </Container>
+      </div>
 
     </Router>
   )

@@ -1,9 +1,4 @@
 import React, { Component } from 'react'
-import {
-  Button, Form, Input, Label, Row, Col, 
-  InputGroup, InputGroupButtonDropdown, DropdownToggle,
-  DropdownMenu, DropdownItem
-} from 'reactstrap'
 
 import convertLength from '../LengthConv'
 
@@ -45,13 +40,9 @@ export default class Filter extends Component {
   defaultState = () => {
     return {
       distFrom_Value: '',
-      distFrom_DropDownOpen: false,
       distTo_Value: '',
-      distTo_DropDownOpen: false,
       elevFrom_Value: '',
-      elevFrom_DropDownOpen: false,
       elevTo_Value: '',
-      elevTo_DropDownOpen: false
     }
   }
 
@@ -71,12 +62,6 @@ export default class Filter extends Component {
     this.filter(newState, false)
 
     evt.preventDefault()
-  }
-
-  toggleDropDown = (id) => {
-    this.setState({
-      [id + '_DropDownOpen']: !this.state[id + '_DropDownOpen']
-    })
   }
 
   dropDownChanged = (id, elem) => {
@@ -113,40 +98,47 @@ export default class Filter extends Component {
   }
 
   unitInput = (placeholder, id, dropdown) => {
-    var menu = dropdown.map((elem, idx) => {
+    var unitMenuItems = dropdown.map((elem, idx) => {
       return (
-        <DropdownItem
+        <button
           key={idx}
+          type='button'
+          role='menuitem'
+          className='dropdown-item'
           onClick={(evt) => this.dropDownChanged(id, elem)}
         >
           {elem}
-        </DropdownItem>
+        </button>
       )
     })
 
     return (
-      <Col className='col-12 col-sm-6 col-md-4 col-lg-3'>
-        <InputGroup className='mt-1 mb-1' >
-          <Input
-            placeholder={placeholder}
+      <div className='col-12 col-sm-6 col-md-4 col-lg-3'>
+        <div className='input-group my-1'>
+          <input
+            type='text'
             id={id}
+            className='form-control'
+            placeholder={placeholder}
             onChange={(evt) => this.inputChanged(id, evt)}
             value={this.state[id + '_Value']}
           />
-          <InputGroupButtonDropdown
-            addonType="append"
-            isOpen={this.state[id + '_DropDownOpen']}
-            toggle={() => this.toggleDropDown(id)}
-          >
-            <DropdownToggle caret>
+          <div class='input-group-append'>
+            <button
+              type='button'
+              className='btn btn-secondary dropdown-toggle'
+              data-toggle='dropdown'
+              aria-haspopup='true'
+              aria-expanded='false'
+            >
               {this.state[id + '_Unit']}
-            </DropdownToggle>
-            <DropdownMenu>
-              {menu}
-            </DropdownMenu>
-          </InputGroupButtonDropdown>
-        </InputGroup>
-      </Col>
+            </button>
+            <div class='dropdown-menu' role='menu'>
+              {unitMenuItems}
+            </div>
+          </div>
+        </div>
+      </div>
     )
   }
 
@@ -187,47 +179,52 @@ export default class Filter extends Component {
     var { srchText } = this.state
 
     return (
-      <>
-        <Form>
-          <Row>
-            <Col className='mt-1 col-12'>
-              <Input
-                className='mt-1 mb-1'
-                placeholder='Search Text'
-                id='srchText'
-                onChange={(evt) => this.textChanged(evt)}
-                value={srchText}
-              />
-            </Col>
-          </Row>
-          <Row>
-            <Col className='col-12'>
-              <Button className='mt-1 mb-1 ml-0' color='warning' onClick={(evt) => this.loadPreset(evt, 'orange')}>Orange</Button>
-              <Button className='mt-1 mb-1 ml-1' color='success' onClick={(evt) => this.loadPreset(evt, 'green')}>Green</Button>
-              <Button className='mt-1 mb-1 ml-1' color='primary' onClick={(evt) => this.loadPreset(evt, 'blue')}>Blue / Red</Button>
-              <Button className='mt-1 mb-1 ml-1' onClick={(evt) => this.loadPreset(evt, 'clear')}>Reset</Button>
-            </Col>
-          </Row>
-          <Row>
-            <Col className='col-12'>
-              <Label className='mt-1 mb-1' for='distFrom'>Distance</Label>
-            </Col>
-          </Row>
-          <Row>
-            {this.unitInput('Distance From', 'distFrom', this.distUnits)}
-            {this.unitInput('Distance To', 'distTo', this.distUnits)}
-          </Row>
-          <Row>
-            <Col className='col-12'>
-              <Label className='mt-1 mb-1' for='elevFrom'>Elevation</Label>
-            </Col>
-          </Row>
-          <Row>
-            {this.unitInput('Elevation From', 'elevFrom', this.elevUnits)}
-            {this.unitInput('Elevation To', 'elevTo', this.elevUnits)}
-          </Row>
-        </Form>
-      </>
+      <form>
+
+        <div className='row'>
+          <div className='col-12 mt-1'>
+            <input
+              id='srchText'
+              className='form-control my-1'
+              placeholder='Search Text'
+              onChange={(evt) => this.textChanged(evt)}
+              value={srchText}
+            />
+          </div>
+        </div>
+
+        <div className='row'>
+          <div className='col-12 mt-1'>
+            <button type='button' className='my-1 mr-1 btn btn-warning' onClick={(evt) => this.loadPreset(evt, 'orange')}>Orange</button>
+            <button type='button' className='my-1 mr-1 btn btn-success' onClick={(evt) => this.loadPreset(evt, 'green')}>Green</button>
+            <button type='button' className='my-1 mr-1 btn btn-primary' onClick={(evt) => this.loadPreset(evt, 'blue')}>Blue / Red</button>
+            <button type='button' className='my-1 mr-1 btn btn-secondary' onClick={(evt) => this.loadPreset(evt, 'clear')}>Reset</button>
+          </div>
+        </div>
+
+        <div className='row'>
+          <div className='col-12'>
+            <label for='distFrom' className='my-1'>Distance</label>
+          </div>
+        </div>
+
+        <div className='row'>
+          {this.unitInput('Distance From', 'distFrom', this.distUnits)}
+          {this.unitInput('Distance To', 'distTo', this.distUnits)}
+        </div>
+
+        <div className='row'>
+          <div className='col-12'>
+            <label for='elevFrom' className='my-1'>Elevation</label>
+          </div>
+        </div>
+
+        <div className='row'>
+          {this.unitInput('Elevation From', 'elevFrom', this.elevUnits)}
+          {this.unitInput('Elevation To', 'elevTo', this.elevUnits)}
+        </div>
+
+      </form>
     )
 
   }

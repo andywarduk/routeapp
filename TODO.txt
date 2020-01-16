@@ -1,2 +1,1 @@
 Health check - https://docs.docker.com/compose/compose-file/#healthcheck
-Remove reactstrap - just use vanilla bootstrap

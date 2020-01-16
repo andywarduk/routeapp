@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { Badge } from 'reactstrap'
 
 import StravaContext from './StravaContext'
 import StravaService from '../StravaService'
@@ -25,7 +24,8 @@ export default class UpdateTable extends Component {
   }
 
   badge = (text, colour) => {
-    return <Badge color={colour || 'primary'}>{text}</Badge>
+    var classStr = (colour ? `badge badge-${colour}` : 'badge')
+    return <span className={classStr}>{text}</span>
   }
 
   statusDesc = (status) => {

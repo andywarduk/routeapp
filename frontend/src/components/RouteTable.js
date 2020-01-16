@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSortUp } from '@fortawesome/free-solid-svg-icons'
 import { faSortDown } from '@fortawesome/free-solid-svg-icons'
@@ -51,7 +50,7 @@ export default class RouteTable extends Component {
     })
 
     return (
-      <Table size='sm' className='mt-2'>
+      <table className='table table-sm mt-2'>
         <thead>
           <tr>
             {this.renderHeadingCell('routeid', 'Link', 1)}
@@ -62,10 +61,11 @@ export default class RouteTable extends Component {
             {this.renderHeadingCell('estimated_moving_time', 'Time', 1)}
           </tr>
         </thead>
+
         <tbody>
           {rows}
         </tbody>
-      </Table>
+      </table>
     )
   }
 

@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { Row, Col } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faKeyboard } from '@fortawesome/free-solid-svg-icons'
 
@@ -168,9 +167,11 @@ export default class FilteredRouteTable extends Component {
     return (
       <>
         <Filter filterCb={this.filterChanged}/>
-        <Row className='mt-2'>
-          <Col>{count}&nbsp;{spinner}</Col>
-        </Row>
+        <div className='row'>
+          <div className='col'>
+            <span className='mr-2'>{count}</span><span>{spinner}</span>
+          </div>
+        </div>
         {table}
       </>
     )

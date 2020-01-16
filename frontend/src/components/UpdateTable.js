@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
@@ -46,16 +45,20 @@ export default class UpdateTable extends Component {
 
     if (loading) {
       return (
-        <Row>
-          <Col>Loading...&nbsp;<FontAwesomeIcon icon={faSpinner} spin={true}/></Col>
-        </Row>
+        <div className='row'>
+          <div className='col'>
+            <span className='mr-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
+            </div>
+        </div>
       )
 
     } else if (error){
       return (
-        <Row>
-          <Col>{error.toString()}</Col>
-        </Row>
+        <div className='row'>
+          <div className='col'>
+            {this.error}
+          </div>
+        </div>
       )
 
     }
@@ -65,7 +68,7 @@ export default class UpdateTable extends Component {
     })
 
     return (
-      <Table size='sm' className='mt-2'>
+      <table className='table table-sm mt-2'>
         <thead>
           <tr>
             <th className='text-nowrap'>Id</th>
@@ -73,10 +76,11 @@ export default class UpdateTable extends Component {
             <th className='text-nowrap'>Status</th>
           </tr>
         </thead>
+
         <tbody>
           {rows}
         </tbody>
-      </Table>
+      </table>
     )
   }
 
