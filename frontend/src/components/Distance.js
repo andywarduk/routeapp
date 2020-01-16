@@ -14,9 +14,13 @@ export default class Distance extends Component {
 
     var distString = dist.toFixed(dp)
 
-    return (
-      <>{distString} {unit}</>
-    )
+    if (this.props.showUnit || this.props.showUnit === undefined) {
+      return (
+        <>{distString} {unit}</>
+      )
+    }
+
+    return <>{distString}</>
   }
 
 }

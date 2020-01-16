@@ -5,11 +5,11 @@ import TimeSpan from './TimeSpan'
 export default class RouteRow extends Component {
 
   render() {
-    var { route } = this.props
+    var { route, colClasses } = this.props
 
     return (
       <tr>
-        <td>
+        <td className={colClasses[0].join(' ')}>
           <a
             href={`http://www.strava.com/routes/${route.routeid}`}
             target='_blank'
@@ -18,21 +18,27 @@ export default class RouteRow extends Component {
             {route.routeid}
           </a>
         </td>
-        <td>{route.name}</td>
-        <td>{route.description}</td>
-        <td className='text-right text-nowrap'>
+        <td className={colClasses[1].join(' ')}>{route.name}</td>
+        <td className={colClasses[2].join(' ')}>{route.description}</td>
+
+        <td className={colClasses[3].join(' ') + ' text-nowrap'}>
+          <Distance m={route.distance} unit='mi' dp='0' showUnit={false}/>/<Distance m={route.distance} unit='km' dp='0' showUnit={false}/>
+        </td>
+        <td className={colClasses[4].join(' ') + ' text-right text-nowrap'}>
           <Distance m={route.distance} unit='mi' dp='1'/>
         </td>
-        <td className='text-right text-nowrap'>
+        <td className={colClasses[5].join(' ') + ' text-right text-nowrap'}>
           <Distance m={route.distance} unit='km' dp='1'/>
         </td>
-        <td className='text-right text-nowrap'>
+
+        <td className={colClasses[6].join(' ') + ' text-right text-nowrap'}>
           <Distance m={route.elevation_gain} unit='m' dp='0'/>
         </td>
-        <td className='text-right text-nowrap'>
+        <td className={colClasses[7].join(' ') + ' text-right text-nowrap'}>
           <Distance m={route.elevation_gain} unit='ft' dp='0'/>
         </td>
-        <td className='text-right text-nowrap'>
+
+        <td className={colClasses[8].join(' ') + ' text-right text-nowrap'}>
           <TimeSpan secs={route.estimated_moving_time} minUnit='m' />
         </td>
       </tr>

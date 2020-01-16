@@ -14,51 +14,64 @@ export default class RouteTable extends Component {
     sortCb(col)
   }
 
-  renderHeadingCell = (col, desc, span) => {
-    var { sortCol, sortAsc } = this.props
+  render() {
+    var { routes, sortCol, sortAsc } = this.props
 
-    var th
+    var headingCells = []
+    var colClasses = []
 
-    if (col) {
-      var icon
+    var addHeadingCell = (col, desc, span, classes) => {
+      // Save classes for row use
+      classes = classes || []
+      for (var i = 0; i < span; i++) colClasses.push([...classes])
 
-      if (col === sortCol) {
-        if (sortAsc) {
-          icon = <FontAwesomeIcon icon={faSortDown} />
+      // Add no wrapping to heading classes
+      classes.unshift('text-nowrap')
+
+      var th
+      var key = headingCells.length
+
+      if (col) {
+        var icon
+  
+        if (col === sortCol) {
+          if (sortAsc) {
+            icon = <FontAwesomeIcon icon={faSortDown} />
+          } else {
+            icon = <FontAwesomeIcon icon={faSortUp} />
+          }
         } else {
-          icon = <FontAwesomeIcon icon={faSortUp} />
+          icon = <FontAwesomeIcon icon={faSort} />
         }
+  
+        th = <th key={key} className={classes.join(' ')} onClick={() => this.sort(col)} colSpan={span}>{desc}&nbsp;{icon}</th>
+  
       } else {
-        icon = <FontAwesomeIcon icon={faSort} />
+        th = <th key={key} className={classes.join(' ')} colSpan={span}>{desc}</th>
+  
       }
 
-      th = <th className='text-nowrap' onClick={() => this.sort(col)} colSpan={span}>{desc}&nbsp;{icon}</th>
-
-    } else {
-      th = <th className='text-nowrap' colSpan={span}>{desc}</th>
-
+      headingCells.push(th)
     }
 
-    return th
-  }
-
-  render() {
-    var { routes } = this.props
+    // Set up heading cells
+    addHeadingCell('routeid', 'Link', 1)
+    addHeadingCell('name', 'Name', 1)
+    addHeadingCell(null, 'Description', 1, ['d-none', 'd-lg-table-cell'])
+    addHeadingCell('distance', 'mi/km', 1, ['text-right', 'd-xl-none', 'd-lg-none', 'd-sm-none'])
+    addHeadingCell('distance', 'Distance', 2, ['d-none', 'd-sm-table-cell'])
+    addHeadingCell('elevation_gain', 'Elevation', 2, ['d-none', 'd-sm-table-cell'])
+    addHeadingCell('estimated_moving_time', 'Time', 1, ['d-none', 'd-sm-table-cell'])
 
     var rows = routes.map(r => {
-      return <RouteRow route={r} key={r.routeid} />
+      return <RouteRow route={r} key={r.routeid} colClasses={colClasses}/>
     })
 
     return (
       <table className='table table-sm mt-2'>
         <thead>
           <tr>
-            {this.renderHeadingCell('routeid', 'Link', 1)}
-            {this.renderHeadingCell('name', 'Name', 1)}
-            {this.renderHeadingCell(null, 'Description', 1)}
-            {this.renderHeadingCell('distance', 'Distance', 2)}
-            {this.renderHeadingCell('elevation_gain', 'Elevation', 2)}
-            {this.renderHeadingCell('estimated_moving_time', 'Time', 1)}
+            {headingCells}
           </tr>
         </thead>
 
