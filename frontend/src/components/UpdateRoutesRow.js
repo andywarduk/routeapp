@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import StravaContext from './StravaContext'
 import StravaService from '../StravaService'
 
-export default class UpdateTable extends Component {
+export default class UpdateRoutesRow extends Component {
   static contextType = StravaContext
 
   STATUS_ERRORED = -1
@@ -45,7 +45,7 @@ export default class UpdateTable extends Component {
     var { route } = this.props
 
     try {
-      var res = await this.stravaService.route(this.context, route.routeid)
+      var res = await this.stravaService.route(this.context.jwt, route.routeid)
 
       if (res.ok) {
         var status = this.STATUS_UPTODATE
@@ -76,6 +76,10 @@ export default class UpdateTable extends Component {
 
     }
 
+  }
+
+  componentWillUnmount = () => {
+    // TODO cancel any pending async
   }
 
   render = () => {

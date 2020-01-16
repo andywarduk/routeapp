@@ -5,8 +5,10 @@ import { faSpinner, faKeyboard } from '@fortawesome/free-solid-svg-icons'
 import RouteTable from './RouteTable'
 import RouteService from '../RouteService'
 import Filter from './Filter'
+import StravaContext from './StravaContext'
 
 export default class FilteredRouteTable extends Component {
+  static contextType = StravaContext
 
   debounceTime = 400 // 0.4 second debounce
 
@@ -51,7 +53,7 @@ export default class FilteredRouteTable extends Component {
     }
 
     // Make request
-    var res = await this.routeService.search({
+    var res = await this.routeService.search(this.context.jwt, {
       columns: ['routeid', 'name', 'description', 'distance', 'elevation_gain', 'estimated_moving_time'],
       sort: {
         column: srchState.sortCol,

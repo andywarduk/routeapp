@@ -3,9 +3,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
 import RouteService from '../RouteService'
-import UpdateTableRow from './UpdateTableRow'
+import UpdateRoutesRow from './UpdateRoutesRow'
+import StravaContext from './StravaContext'
 
-export default class UpdateTable extends Component {
+export default class UpdateRoutes extends Component {
+  static contextType = StravaContext
 
   constructor(props) {
     super(props)
@@ -21,7 +23,7 @@ export default class UpdateTable extends Component {
 
   componentDidMount = async () => {
     // Make request
-    var res = await this.routeService.search({
+    var res = await this.routeService.search(this.context.jwt, {
       columns: ['routeid', 'name', 'updatedAt']
     })
 
@@ -64,7 +66,7 @@ export default class UpdateTable extends Component {
     }
 
     var rows = routes.map(r => {
-      return <UpdateTableRow route={r} key={r.routeid} />
+      return <UpdateRoutesRow route={r} key={r.routeid} />
     })
 
     return (

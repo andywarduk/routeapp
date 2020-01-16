@@ -3,11 +3,15 @@ import { buildResponse, buildErrorResponse } from './Response'
 
 export default class RouteService {
 
-  async all() {
+  async all(bearer) {
     var result
 
     try {
-      var res = await axios.get('/api/routes/')
+      var res = await axios.get('/api/routes/', {
+        headers: {
+          'Authorization': `Bearer ${bearer}`
+        }
+      })
       result = buildResponse(res)
     } catch (err) {
       result = buildErrorResponse(err)
@@ -16,11 +20,15 @@ export default class RouteService {
     return result
   }
 
-  async search(options) {
+  async search(bearer, options) {
     var result
 
     try {
-      var res = await axios.post('/api/routes/', options)
+      var res = await axios.post('/api/routes/', options, {
+        headers: {
+          'Authorization': `Bearer ${bearer}`
+        }
+      })
       result = buildResponse(res)
     } catch (err) {
       result = buildErrorResponse(err)

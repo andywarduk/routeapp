@@ -4,6 +4,8 @@ var queryString = require('query-string')
 var jwt = require('jsonwebtoken');
 
 var response = require('../response')
+var permissions = require('./permissions')
+var { permsEnum } = permissions
 
 // User schema
 var Users = require('../models/users')
@@ -40,11 +42,45 @@ router.route('/auth').post(async function (req, res) {
     }
 
     // Insert / update
-    await Users.findOneAndUpdate({
+    user = await Users.findOneAndUpdate({
       athleteid: athleteId
     }, user, {
-      upsert: true
+      upsert: true,
+      returnNewDocument: true
     })
+
+    var update = false
+
+    // Default permissions
+    if (!user.perms) {
+      user.perms = {}
+      update = true
+    }
+
+    var hasPerms = false
+    for (k of Object.keys(permsEnum)) {
+      if (!!user.perms[permsEnum[k]]) {
+        hasPerms = true
+        break
+      }
+    }
+    
+    if (!hasPerms) {
+      user.perms[permsEnum.PERM_VIEWROUTES] = true
+      update = true
+    }
+
+    // Make app owner an admin
+    var superAthlete = parseInt(process.env.SUPER_ATHLETE)
+    if (!!superAthlete && athleteId === superAthlete) {
+      user.perms[permsEnum.PERM_ADMIN] = true
+      update = true
+    }
+
+    if (update) {
+      // Update the user
+      await user.save()
+    }
 
     // Build jwt
     var jwtPayload = {
@@ -55,8 +91,16 @@ router.route('/auth').post(async function (req, res) {
       issuer: 'corsham.cc'
     })
     
-    // Send back
-    res.json(token)
+    // Send back details
+    res.json({
+      jwt: token,
+      picLarge: user.profile,
+      picMed: user.profile_medium,
+      firstName: user.firstname,
+      lastName: user.lastname,
+      fullName: `${user.firstname} ${user.lastname}`.trim(),
+      perms: user.perms
+    })
 
   } catch (err) {
     response.errorResponse(res, err)

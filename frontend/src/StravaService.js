@@ -13,9 +13,12 @@ export default class StravaService {
           'Authorization': `Bearer ${bearer}`
         }
       })
+
       result = buildResponse(res)
+
     } catch (err) {
       result = buildErrorResponse(err)
+
     }
 
     return result
