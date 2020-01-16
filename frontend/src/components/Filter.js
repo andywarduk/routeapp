@@ -123,7 +123,7 @@ export default class Filter extends Component {
             onChange={(evt) => this.inputChanged(id, evt)}
             value={this.state[id + '_Value']}
           />
-          <div class='input-group-append'>
+          <div className='input-group-append'>
             <button
               type='button'
               className='btn btn-secondary dropdown-toggle'
@@ -133,7 +133,7 @@ export default class Filter extends Component {
             >
               {this.state[id + '_Unit']}
             </button>
-            <div class='dropdown-menu' role='menu'>
+            <div className='dropdown-menu' role='menu'>
               {unitMenuItems}
             </div>
           </div>
@@ -204,7 +204,7 @@ export default class Filter extends Component {
 
         <div className='row'>
           <div className='col-12'>
-            <label for='distFrom' className='my-1'>Distance</label>
+            <label htmlFor='distFrom' className='my-1'>Distance</label>
           </div>
         </div>
 
@@ -215,7 +215,7 @@ export default class Filter extends Component {
 
         <div className='row'>
           <div className='col-12'>
-            <label for='elevFrom' className='my-1'>Elevation</label>
+            <label htmlFor='elevFrom' className='my-1'>Elevation</label>
           </div>
         </div>
 
