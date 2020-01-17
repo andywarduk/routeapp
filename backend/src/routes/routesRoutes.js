@@ -10,44 +10,6 @@ var router = express.Router()
 // Routes schema
 var Routes = require('../models/routes')
 
-// Get specific route
-router.route('/routes/:id').get(
-  passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
-  async function (req, res) {
-    try {
-      var id = req.params.id;
-
-      var doc = await Routes.findOne({
-        routeid: id
-      })
-
-      res.json(doc)
-
-    } catch (err) {
-      response.errorResponse(res, err)
-
-    }
-  }
-)
-
-// Get all routes
-router.route('/routes').get(
-  passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
-  async function (req, res) {
-    try {
-      var routes = await Routes.find()
-
-      res.json(routes)
-
-    } catch(err) {
-      response.errorResponse(res, err)
-
-    }
-  }
-)
-
 // Search routes
 router.route('/routes').post(
   passport.authenticate('jwt', { session: false }),
@@ -140,10 +102,53 @@ router.route('/routes').post(
   }
 )
 
-// Add route
-router.route('/routes/add/:id').post(
+// Get route list
+router.route('/routes/list').get(
+  async function (req, res) {
+    try {
+      // Do search
+      var list = await Routes.find({}, {
+        routeid: 1
+      }, {
+        sort: {
+          routeid: 1
+        }
+      })
+
+      res.send(list.map((r) => r.routeid).join('\n') + '\n')
+
+    } catch (err) {
+      response.errorResponse(res, err)
+
+    }
+  }
+)
+
+// Get specific route
+router.route('/routes/:id').get(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_ADDROUTES),
+  permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
+  async function (req, res) {
+    try {
+      var id = req.params.id;
+
+      var doc = await Routes.findOne({
+        routeid: id
+      })
+
+      res.json(doc)
+
+    } catch (err) {
+      response.errorResponse(res, err)
+
+    }
+  }
+)
+
+// Add or update route
+router.route('/routes/:id').post(
+  passport.authenticate('jwt', { session: false }),
+  permissions.checkPermission(permsEnum.PERM_MODIFYROUTES),
   async function (req, res) {
     var id = req.params.id
 
@@ -152,12 +157,15 @@ router.route('/routes/add/:id').post(
       routeid: id
     }
 
-    var item = new Routes(doc);
-
     try {
-      await item.save()
+      await Routes.findOneAndUpdate({
+        routeid: id
+      }, doc, {
+        upsert: true,
+        overwrite: true
+      })
 
-      response.msgResponse(res, `Saved route ${id}`)
+      response.msgResponse(res, `Added / replaced route ${id}`)
 
     } catch (err) {
       response.errorResponse(res, err)
@@ -167,9 +175,9 @@ router.route('/routes/add/:id').post(
 )
 
 // Replace route
-router.route('/routes/replace/:id').put(
+router.route('/routes/:id').put(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_UPDATEROUTES),
+  permissions.checkPermission(permsEnum.PERM_MODIFYROUTES),
   async function (req, res) {
     var id = req.params.id
 
@@ -195,7 +203,7 @@ router.route('/routes/replace/:id').put(
 )
 
 // Delete route
-router.route('/routes/delete/:id').delete(
+router.route('/routes/:id').delete(
   passport.authenticate('jwt', { session: false }),
   permissions.checkPermission(permsEnum.PERM_DELETEROUTES),
   async function (req, res) {

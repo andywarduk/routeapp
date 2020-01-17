@@ -1,8 +1,8 @@
 var permsEnum = {
   PERM_ADMIN: 'admin',
   PERM_VIEWROUTES: 'viewRoutes',
-  PERM_ADDROUTES: 'addRoutes',
-  PERM_UPDATEROUTES: 'updateRoutes',
+  PERM_MODIFYROUTES: 'modifyRoutes',
+  PERM_CHECKALLROUTES: 'checkAllRoutes',
   PERM_DELETEROUTES: 'deleteRoutes'
 }
 

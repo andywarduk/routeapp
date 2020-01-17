@@ -11,7 +11,7 @@ var router = express.Router()
 // Get strava route
 router.route('/strava/route/:id').get(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_UPDATEROUTES, permsEnum.PERM_ADDROUTES),
+  permissions.checkPermission(permsEnum.PERM_MODIFYROUTES),
   async function (req, res) {
     var id = req.params.id
 

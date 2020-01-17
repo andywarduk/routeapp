@@ -36,6 +36,8 @@ export default class FilteredRouteTable extends Component {
   }
 
   requestData = async (newState) => {
+    var { jwt } = this.context
+
     // Allocate request number
     var requestNo = this.state.request + 1
 
@@ -53,7 +55,7 @@ export default class FilteredRouteTable extends Component {
     }
 
     // Make request
-    var res = await this.routeService.search(this.context.jwt, {
+    var res = await this.routeService.search(jwt, {
       columns: ['routeid', 'name', 'description', 'distance', 'elevation_gain', 'estimated_moving_time'],
       sort: {
         column: srchState.sortCol,
@@ -73,7 +75,7 @@ export default class FilteredRouteTable extends Component {
       } else {
         this.setState({
           routes: [],
-          error: res.data,
+          error: res.data.toString(),
           loading: Math.max(0, this.state.loading - 1)
         })
       }

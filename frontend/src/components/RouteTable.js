@@ -20,13 +20,13 @@ export default class RouteTable extends Component {
     var headingCells = []
     var colClasses = []
 
-    var addHeadingCell = (col, desc, span, classes) => {
-      // Save classes for row use
-      classes = classes || []
-      for (var i = 0; i < span; i++) colClasses.push([...classes])
+    var addHeadingCell = (col, desc, span, commonClasses, thClasses, tdClasses) => {
+      // Build full class lists
+      thClasses = commonClasses.concat(thClasses)
+      tdClasses = commonClasses.concat(tdClasses)
 
-      // Add no wrapping to heading classes
-      classes.unshift('text-nowrap')
+      // Save classes for row use
+      for (var i = 0; i < span; i++) colClasses.push(tdClasses)
 
       var th
       var key = headingCells.length
@@ -44,10 +44,10 @@ export default class RouteTable extends Component {
           icon = <FontAwesomeIcon icon={faSort} />
         }
   
-        th = <th key={key} className={classes.join(' ')} onClick={() => this.sort(col)} colSpan={span}>{desc}&nbsp;{icon}</th>
+        th = <th key={key} className={thClasses.join(' ')} onClick={() => this.sort(col)} colSpan={span}>{desc}&nbsp;{icon}</th>
   
       } else {
-        th = <th key={key} className={classes.join(' ')} colSpan={span}>{desc}</th>
+        th = <th key={key} className={thClasses.join(' ')} colSpan={span}>{desc}</th>
   
       }
 
@@ -55,13 +55,13 @@ export default class RouteTable extends Component {
     }
 
     // Set up heading cells
-    addHeadingCell('routeid', 'Link', 1)
-    addHeadingCell('name', 'Name', 1)
-    addHeadingCell(null, 'Description', 1, ['d-none', 'd-lg-table-cell'])
-    addHeadingCell('distance', 'mi/km', 1, ['text-right', 'd-xl-none', 'd-lg-none', 'd-sm-none'])
-    addHeadingCell('distance', 'Distance', 2, ['d-none', 'd-sm-table-cell'])
-    addHeadingCell('elevation_gain', 'Elevation', 2, ['d-none', 'd-sm-table-cell'])
-    addHeadingCell('estimated_moving_time', 'Time', 1, ['d-none', 'd-sm-table-cell'])
+    addHeadingCell('routeid', 'Link', 1, ['text-nowrap'], [], [])
+    addHeadingCell('name', 'Name', 1, [], ['text-nowrap'], [])
+    addHeadingCell(null, 'Description', 1, ['d-none', 'd-lg-table-cell'], ['text-nowrap'], [])
+    addHeadingCell('distance', 'mi/km', 1, ['text-nowrap', 'd-xl-none', 'd-lg-none', 'd-sm-none', 'text-right'], [], [])
+    addHeadingCell('distance', 'Distance', 2, ['text-nowrap', 'd-none', 'd-sm-table-cell'], ['text-center'], ['text-right'])
+    addHeadingCell('elevation_gain', 'Elevation', 2, ['text-nowrap', 'd-none', 'd-sm-table-cell'], ['text-center'], ['text-right'])
+    addHeadingCell('estimated_moving_time', 'Time', 1, ['text-nowrap', 'd-none', 'd-sm-table-cell', 'text-right'], [], [])
 
     var rows = routes.map(r => {
       return <RouteRow route={r} key={r.routeid} colClasses={colClasses}/>

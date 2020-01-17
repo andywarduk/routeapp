@@ -3,23 +3,6 @@ import { buildResponse, buildErrorResponse } from './Response'
 
 export default class RouteService {
 
-  async all(bearer) {
-    var result
-
-    try {
-      var res = await axios.get('/api/routes/', {
-        headers: {
-          'Authorization': `Bearer ${bearer}`
-        }
-      })
-      result = buildResponse(res)
-    } catch (err) {
-      result = buildErrorResponse(err)
-    }
-
-    return result
-  }
-
   async search(bearer, options) {
     var result
 
@@ -37,18 +20,35 @@ export default class RouteService {
     return result
   }
 
-  async add(bearer, routeid, route) {
+  async get(bearer, routeid) {
     var result
 
     try {
-      var res = await axios.post(`/api/routes/add/${routeid}`, route, {
+      var res = await axios.get(`/api/routes/${routeid}`, {
         headers: {
           'Authorization': `Bearer ${bearer}`
         }
       })
       result = buildResponse(res)
     } catch (err) {
-      result = buildErrorResponse(res)
+      result = buildErrorResponse(err)
+    }
+
+    return result
+  }
+
+  async upsert(bearer, routeid, route) {
+    var result
+
+    try {
+      var res = await axios.post(`/api/routes/${routeid}`, route, {
+        headers: {
+          'Authorization': `Bearer ${bearer}`
+        }
+      })
+      result = buildResponse(res)
+    } catch (err) {
+      result = buildErrorResponse(err)
     }
 
     return result
@@ -58,14 +58,31 @@ export default class RouteService {
     var result
 
     try {
-      var res = await axios.post(`/api/routes/replace/${routeid}`, route, {
+      var res = await axios.put(`/api/routes/${routeid}`, route, {
         headers: {
           'Authorization': `Bearer ${bearer}`
         }
       })
       result = buildResponse(res)
     } catch (err) {
-      result = buildErrorResponse(res)
+      result = buildErrorResponse(err)
+    }
+
+    return result
+  }
+
+  async delete(bearer, routeid) {
+    var result
+
+    try {
+      var res = await axios.delete(`/api/routes/${routeid}`, {
+        headers: {
+          'Authorization': `Bearer ${bearer}`
+        }
+      })
+      result = buildResponse(res)
+    } catch (err) {
+      result = buildErrorResponse(err)
     }
 
     return result

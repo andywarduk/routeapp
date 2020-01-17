@@ -76,7 +76,15 @@ class StravaGateway extends Component {
     var { HoldPage } = this.props
 
     if (HoldPage && typeof(HoldPage) === 'function') {
-      return <HoldPage>{message}</HoldPage>
+      return (
+        <HoldPage>
+          <div className='row mt-2'>
+            <div className='col'>
+              <span className='mt-2'>{message}</span>
+            </div>
+          </div>
+        </HoldPage>
+      )
     }
 
     return message

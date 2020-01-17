@@ -13,10 +13,8 @@ class Main extends Component {
   static contextType = StravaContext
 
   render = () => {
-    var { picMed, perms } = this.context
+    var { picMed, fullName, perms } = this.context
     var { location } = this.props
-
-    var permissions = new Permissions(perms)
 
     var navItems = []
     var routes = []
@@ -50,9 +48,13 @@ class Main extends Component {
       haveLinks = true
     }
 
+    var permissions = new Permissions(perms)
+
     // Links
-    if (permissions.check(perms, 'addRoute')) addNavUrl('/add', 'Add', <AddRoutes/>)
-    if (permissions.check(perms, 'maintainRoutes')) addNavUrl('/update', 'Maintain', <UpdateRoutes/>)
+    if (permissions.check('modifyRoutes')) {
+      addNavUrl('/add', 'Add', <AddRoutes/>)
+      addNavUrl('/update', 'Maintain', <UpdateRoutes/>)
+    }
 
     var routeTable = <FilteredRouteTable/>
 
@@ -68,7 +70,7 @@ class Main extends Component {
     if (picMed.startsWith('http')) avatar = (
       <ul className='navbar-nav ml-auto'>
         <li key='avatar' className='nav-item'>
-          <img className='rounded-circle ml-1' height="40px" width="40px" src={this.context.picMed} alt={this.context.fullName}/>
+          <img className='rounded-circle ml-1' height="40px" width="40px" src={picMed} alt={fullName}/>
         </li>
       </ul>
     )
