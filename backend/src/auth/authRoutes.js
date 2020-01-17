@@ -7,8 +7,10 @@ var response = require('../response')
 var permissions = require('./permissions')
 var { permsEnum } = permissions
 
-// User schema
+// User schemas
 var Users = require('../models/users')
+var UserPerms = require('../models/userPerms')
+var UserAuth = require('../models/userAuth')
 
 // Create router
 var router = express.Router()
@@ -34,52 +36,59 @@ router.route('/auth').post(async function (req, res) {
     // Set up user document
     var { id: athleteId, ...user } = data.athlete
     user.athleteid = athleteId
-    user.auth = {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at: data.expires_at,
-      expires_in: data.expires_in
-    }
 
-    // Insert / update
     user = await Users.findOneAndUpdate({
       athleteid: athleteId
     }, user, {
       upsert: true,
+      overwrite: true,
       returnNewDocument: true
-    })
-
-    var update = false
-
-    // Default permissions
-    if (!user.perms) {
-      user.perms = {}
-      update = true
-    }
-
-    var hasPerms = false
-    for (k of Object.keys(permsEnum)) {
-      if (!!user.perms[permsEnum[k]]) {
-        hasPerms = true
-        break
-      }
-    }
+    }).exec()
     
-    if (!hasPerms) {
-      user.perms[permsEnum.PERM_VIEWROUTES] = true
-      update = true
+    // Save the user auth document
+    await UserAuth.findOneAndUpdate({
+      athleteid: athleteId
+    }, {
+      athleteid: athleteId,
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: data.expires_at,
+      expires_in: data.expires_in
+    }, {
+      upsert: true,
+      overwrite: true,
+      returnNewDocument: true
+    }).exec()
+
+    // Look up permissions
+    var perms = await UserPerms.findOne({
+      athleteid: athleteId
+    }).exec()
+
+    var save = false
+
+    if (!perms) {
+      // Create perms document
+      perms = new UserPerms()
+
+      perms.athleteid = athleteId
+      perms.perms = {
+        [permsEnum.PERM_VIEWROUTES]: true
+      }
+
+      save = true
     }
 
     // Make app owner an admin
     var superAthlete = parseInt(process.env.SUPER_ATHLETE)
-    if (!!superAthlete && athleteId === superAthlete) {
-      user.perms[permsEnum.PERM_ADMIN] = true
-      update = true
-    }
 
-    if (update) {
-      // Update the user
-      await user.save()
+    if (!!superAthlete && athleteId === superAthlete && !perms.perms[permsEnum.PERM_ADMIN]) {
+      perms.perms[permsEnum.PERM_ADMIN] = true
+      save = true
+    }
+    
+    if (save) {
+      await perms.save()
     }
 
     // Build jwt
@@ -96,10 +105,8 @@ router.route('/auth').post(async function (req, res) {
       jwt: token,
       picLarge: user.profile,
       picMed: user.profile_medium,
-      firstName: user.firstname,
-      lastName: user.lastname,
       fullName: `${user.firstname} ${user.lastname}`.trim(),
-      perms: user.perms
+      perms: perms.perms
     })
 
   } catch (err) {

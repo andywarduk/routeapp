@@ -90,7 +90,7 @@ router.route('/routes').post(
       }
 
       // Do search
-      var routes = await Routes.find(filter, projection, options)
+      var routes = await Routes.find(filter, projection, options).exec()
 
       // Return JSON document
       res.json(routes)
@@ -113,7 +113,7 @@ router.route('/routes/list').get(
         sort: {
           routeid: 1
         }
-      })
+      }).exec()
 
       res.send(list.map((r) => r.routeid).join('\n') + '\n')
 
@@ -134,7 +134,7 @@ router.route('/routes/:id').get(
 
       var doc = await Routes.findOne({
         routeid: id
-      })
+      }).exec()
 
       res.json(doc)
 
@@ -163,7 +163,7 @@ router.route('/routes/:id').post(
       }, doc, {
         upsert: true,
         overwrite: true
-      })
+      }).exec()
 
       response.msgResponse(res, `Added / replaced route ${id}`)
 
@@ -191,7 +191,7 @@ router.route('/routes/:id').put(
         routeid: id
       }, doc, {
         overwrite: true
-      })
+      }).exec()
 
       response.msgResponse(res, `Replaced route ${id}`)
 
@@ -212,7 +212,7 @@ router.route('/routes/:id').delete(
     try {
       await Routes.findOneAndRemove({
         routeid: id
-      })
+      }).exec()
 
       response.msgResponse(res, `Deleted route ${id}`)
 

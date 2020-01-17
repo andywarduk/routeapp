@@ -28,7 +28,7 @@ module.exports = {
       }
 
       if (!ok) {
-        res.send(401, 'Access denied')
+        res.status(401).send('Access denied')
       } else {
         next()
       }

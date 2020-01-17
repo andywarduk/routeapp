@@ -1,9 +1,6 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 
-var permissions = require('../auth/permissions')
-var { permsEnum } = permissions
-
 // Schema
 var Users = new Schema({
   athleteid: {
@@ -20,25 +17,9 @@ var Users = new Schema({
   created_at: String,
   updated_at: String,
   profile_medium: String,
-  profile: String,
-  auth: {
-    access_token: String,
-    refresh_token: String,
-    expires_at: Number,
-    expires_in: Number
-  },
+  profile: String
 }, {
   strict: false
-})
-
-// Add permissions
-var perms = Object.keys(permsEnum).reduce((obj, k) => {
-  obj[permsEnum[k]] = Boolean
-  return obj
-}, {})
-
-Users.add({
-  perms
 })
 
 module.exports = mongoose.model('Users', Users)

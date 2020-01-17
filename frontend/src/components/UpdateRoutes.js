@@ -58,7 +58,7 @@ export default class UpdateRoutes extends Component {
 
     if (loading) {
       return (
-        <div className='row'>
+        <div className='row mt-2'>
           <div className='col'>
             <span className='mr-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
             </div>
@@ -67,7 +67,7 @@ export default class UpdateRoutes extends Component {
 
     } else if (error){
       return (
-        <div className='row'>
+        <div className='row mt-2'>
           <div className='col'>
             {this.error}
           </div>
