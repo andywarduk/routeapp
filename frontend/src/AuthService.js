@@ -22,4 +22,21 @@ export default class AuthService {
     return result
   }
 
+  async getPermKeys(bearer) {
+    var result
+
+    try {
+      var res = await axios.get(`/api/auth/permkeys`, {
+        headers: {
+          'Authorization': `Bearer ${bearer}`
+        }
+      })
+      result = buildResponse(res)
+    } catch (err) {
+      result = buildErrorResponse(err)
+    }
+
+    return result
+  }
+
 }

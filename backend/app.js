@@ -57,6 +57,7 @@ async function main()
   var routesRoutes = require('./src/routes/routesRoutes')
   var authRoutes = require('./src/auth/authRoutes')
   var stravaRoutes = require('./src/strava/stravaRoutes')
+  var usersRoutes = require('./src/users/usersRoutes')
 
   // App Instance
   var app = express()
@@ -65,9 +66,11 @@ async function main()
   app.use(bodyParser.json({
     limit: '4096kb'
   }))
+
   app.use(basePath, routesRoutes)
   app.use(basePath, authRoutes)
   app.use(basePath, stravaRoutes)
+  app.use(basePath, usersRoutes)
 
   // Execute App
   app.listen(port, () => {

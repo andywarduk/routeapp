@@ -6,9 +6,18 @@ var permsEnum = {
   PERM_DELETEROUTES: 'deleteRoutes'
 }
 
+var permsDesc = {
+  PERM_ADMIN: 'Administrator',
+  PERM_VIEWROUTES: 'View routes',
+  PERM_MODIFYROUTES: 'Modify routes',
+  PERM_CHECKALLROUTES: 'Check all routes',
+  PERM_DELETEROUTES: 'Delete routes'
+}
+
 module.exports = {
 
   permsEnum,
+  permsDesc,
 
   checkPermission: (...perm) => {
     return (req, res, next) => {
@@ -33,6 +42,6 @@ module.exports = {
         next()
       }
     }
-  }
+  },
 
 }

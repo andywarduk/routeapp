@@ -4,6 +4,7 @@ import { Switch, Route, withRouter } from 'react-router-dom'
 import FilteredRouteTable from './FilteredRouteTable'
 import AddRoutes from './AddRoutes'
 import UpdateRoutes from './UpdateRoutes'
+import UserRoutes from './UserRoutes'
 import Page from './Page'
 import NavLink from './NavLink'
 import StravaContext from './StravaContext'
@@ -20,15 +21,13 @@ class Main extends Component {
     var routes = []
     var haveLinks = false
 
-    function addRoute(url, children) {
+    function addRoute(url, exact, Component) {
       routes.push(
-        <Route key={url} path={url} exact>
-          {children}
-        </Route>
+        <Route key={url} path={url} component={Component} exact={exact}/>
       )
     }
 
-    function addNavUrl(url, desc, children, atEnd = true) {
+    function addNavUrl(url, exact, desc, Component, atEnd = true) {
       var method = (atEnd ? 'push' : 'unshift')
       var classes = ['nav-item']
 
@@ -43,7 +42,7 @@ class Main extends Component {
         </li>
       )
 
-      addRoute(url, children)
+      addRoute(url, exact, Component)
 
       haveLinks = true
     }
@@ -52,16 +51,18 @@ class Main extends Component {
 
     // Links
     if (permissions.check('modifyRoutes')) {
-      addNavUrl('/add', 'Add', <AddRoutes/>)
-      addNavUrl('/update', 'Maintain', <UpdateRoutes/>)
+      addNavUrl('/add', true, 'Add', AddRoutes)
+      addNavUrl('/update', true, 'Maintain', UpdateRoutes)
     }
 
-    var routeTable = <FilteredRouteTable/>
+    if (permissions.check('admin')) {
+      addNavUrl('/users', false, 'Users', UserRoutes)
+    }
 
     if (haveLinks) {
-      addNavUrl('/', 'Home', routeTable, false)
+      addNavUrl('/', true, 'Home', FilteredRouteTable, false)
     } else {
-      addRoute('/', routeTable)
+      addRoute('/', true, FilteredRouteTable)
     }
 
     // Avatar
@@ -108,7 +109,7 @@ class Main extends Component {
         <Switch>
           {routes}
           <Route path='*'>
-            <div className='row'>
+            <div className='row mt-2'>
               <div className='col'>
                 Error - Page not found
               </div>

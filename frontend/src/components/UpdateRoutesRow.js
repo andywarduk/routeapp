@@ -47,7 +47,6 @@ export default class UpdateRoutesRow extends Component {
         var status = this.STATUS_UPTODATE
         var stravaRoute = res.data
   
-        debugger
         if (stravaRoute.updated_at !== route.updated_at) {
           status = this.STATUS_OUTOFDATE
         }

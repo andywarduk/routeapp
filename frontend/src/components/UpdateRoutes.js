@@ -64,8 +64,9 @@ export default class UpdateRoutes extends Component {
             </div>
         </div>
       )
+    }
 
-    } else if (error){
+    if (error){
       return (
         <div className='row mt-2'>
           <div className='col'>
@@ -73,7 +74,6 @@ export default class UpdateRoutes extends Component {
           </div>
         </div>
       )
-
     }
 
     // Heading columns

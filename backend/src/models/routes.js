@@ -22,4 +22,11 @@ Routes.index({
   description: "text"
 })
 
+Routes.set('toJSON', {
+  transform: (doc, ret) => {
+    delete ret._id
+    delete ret.__v
+  }
+})
+
 module.exports = mongoose.model('Routes', Routes)

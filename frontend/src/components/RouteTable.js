@@ -31,6 +31,8 @@ export default class RouteTable extends Component {
       var th
       var key = headingCells.length
 
+      var style = {}
+
       if (col) {
         var icon
   
@@ -44,10 +46,12 @@ export default class RouteTable extends Component {
           icon = <FontAwesomeIcon icon={faSort} />
         }
   
-        th = <th key={key} className={thClasses.join(' ')} onClick={() => this.sort(col)} colSpan={span}>{desc}&nbsp;{icon}</th>
+        style.cursor = 'pointer'
+
+        th = <th key={key} className={thClasses.join(' ')} style={style} onClick={() => this.sort(col)} colSpan={span}>{desc}&nbsp;{icon}</th>
   
       } else {
-        th = <th key={key} className={thClasses.join(' ')} colSpan={span}>{desc}</th>
+        th = <th key={key} className={thClasses.join(' ')} style={style} colSpan={span}>{desc}</th>
   
       }
 

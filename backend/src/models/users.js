@@ -7,19 +7,25 @@ var Users = new Schema({
     type: Number,
     unique: true
   },
-  username: String,
-  firstname: String,
-  lastname: String,
-  city: String,
-  state: String,
-  country: String,
-  sex: String,
-  created_at: String,
-  updated_at: String,
-  profile_medium: String,
-  profile: String
-}, {
-  strict: false
+  stravaUser: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'StravaUser'
+  },
+  perms: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserPerms'
+  },
+  auth: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserAuths'
+  }
+})
+
+Users.set('toJSON', {
+  transform: (doc, ret) => {
+    delete ret._id
+    delete ret.__v
+  }
 })
 
 module.exports = mongoose.model('Users', Users)

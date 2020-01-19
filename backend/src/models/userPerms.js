@@ -6,22 +6,31 @@ var { permsEnum } = permissions
 
 // Schema
 var UserPerms = new Schema({
-  athleteid: {
-    type: Number,
-    unique: true
-  },
-}, {
-  strict: false
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Users'
+  }
 })
 
 // Add permissions
-var perms = Object.keys(permsEnum).reduce((obj, k) => {
-  obj[permsEnum[k]] = Boolean
-  return obj
-}, {})
+for (k of Object.keys(permsEnum)) {
+  UserPerms.add({
+    [permsEnum[k]]: Boolean
+  })
+}
 
-UserPerms.add({
-  perms
+UserPerms.set('toJSON', {
+  transform: (doc, ret) => {
+    var permsList = []
+
+    for (k of Object.keys(permsEnum)) {
+      permsList.push(permsEnum[k])
+    }
+
+    for (k of Object.keys(ret)) {
+      if (permsList.indexOf(k) < 0) delete ret[k]
+    }
+  }
 })
 
 module.exports = mongoose.model('UserPerms', UserPerms)
