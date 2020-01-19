@@ -105,7 +105,12 @@ router.route('/users/:id/perms').put(
       }).exec()
 
       // Update permissions
-      await UserPerms.findByIdAndUpdate(user.perms, req.body, {
+      perms = {
+        user: user._id,
+        ...req.body
+      }
+
+      await UserPerms.findByIdAndUpdate(user.perms, perms, {
         upsert: true,
         overwrite: true,
         new: true
