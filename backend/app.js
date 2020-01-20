@@ -36,9 +36,20 @@ async function main()
     dbHost = 'mongodb-prod'
   }
 
+  // Build user name + password string
+  var dbUserPwd = ''
+
+  if (process.env.MONGO_INITDB_ROOT_USERNAME && process.env.MONGO_INITDB_ROOT_USERNAME !== '') {
+    if (process.env.MONGO_INITDB_ROOT_PASSWORD && process.env.MONGO_INITDB_ROOT_PASSWORD !== '') {
+      dbUserPwd = `${process.env.MONGO_INITDB_ROOT_USERNAME}:${process.env.MONGO_INITDB_ROOT_PASSWORD}@`
+    } else {
+      dbUserPwd = `${process.env.MONGO_INITDB_ROOT_USERNAME}@`
+    }
+  }
+
   while(!connected && ++connTry <= 20) {
     try{
-      await mongoose.connect(`mongodb://${dbHost}/Routes`)
+      await mongoose.connect(`mongodb://${dbUserPwd}${dbHost}/routes?authSource=admin`)
       connected = true
     } catch(err) {
       console.error("Failed to connect to database", err)

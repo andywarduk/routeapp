@@ -5,10 +5,12 @@ services:
     image: "mongo"
     restart: always
     expose:
-     - "27017"
+      - "27017"
+    env_file:
+      - "./backend/.env"
     volumes:
-     - data-db-prod:/data/db
-     - data-configdb-prod:/data/configdb
+      - data-db-prod:/data/db
+      - data-configdb-prod:/data/configdb
  
   backend-prod:
     build: 

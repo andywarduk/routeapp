@@ -4,10 +4,12 @@ services:
   mongodb-dev:
     image: "mongo"
     ports:
-     - "27017:27017"
+      - "27017:27017"
+    env_file:
+      - "./backend/.env"
     volumes:
-     - data-db-dev:/data/db
-     - data-configdb-dev:/data/configdb
+      - data-db-dev:/data/db
+      - data-configdb-dev:/data/configdb
  
   backend-dev:
     build: 
