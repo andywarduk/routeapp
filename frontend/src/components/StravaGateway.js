@@ -11,6 +11,7 @@ class StravaGateway extends Component {
   AUTHSTAGE_TOKEN = 2
   AUTHSTAGE_AUTH = 3
   AUTHSTAGE_FAIL = -1
+  AUTHSTAGE_TOKENFAIL = -2
 
   tokenPath = 'token'
 
@@ -56,15 +57,21 @@ class StravaGateway extends Component {
         // Finish authentication on the back end
         var res = await this.authService.auth(process.env.REACT_APP_STRAVA_CLIENT_ID, this.state.token)
 
-        this.setState({
-          authStage: this.AUTHSTAGE_AUTH,
-          auth: res.data
-        })
+        if (res.ok) {
+          this.setState({
+            authStage: this.AUTHSTAGE_AUTH,
+            auth: res.data
+          })  
+        } else {
+          this.setState({
+            authStage: this.AUTHSTAGE_TOKENFAIL
+          })  
+        }
 
       } catch (err) {
         // Failed
         this.setState({
-          authStage: this.AUTHSTAGE_FAIL
+          authStage: this.AUTHSTAGE_TOKENFAIL
         })
 
       }
@@ -88,6 +95,17 @@ class StravaGateway extends Component {
     }
 
     return message
+  }
+
+  tokenRedirect = (subPath, matchPath, normalContent) => {
+    if (subPath === `/${this.tokenPath}` || subPath.startsWith(`/${this.tokenPath}/`)) {
+      var redirect = `${matchPath}${subPath.substr(this.tokenPath.length + 1)}`
+
+      return <Redirect to={redirect}/>
+
+    } 
+    
+    return normalContent
   }
 
   render() {
@@ -126,22 +144,20 @@ class StravaGateway extends Component {
 
         break
 
+      case this.AUTHSTAGE_TOKENFAIL:
+        // Failed authentication at token exchange
+        content = this.tokenRedirect(subPath, matchPath, this.holdingPage('Authentication failure'))
+
+        break
+  
       case this.AUTHSTAGE_AUTH:
         // Authenticated
-        if (subPath === `/${this.tokenPath}` || subPath.startsWith(`/${this.tokenPath}/`)) {
-          var redirect = `${matchPath}${subPath.substr(this.tokenPath.length + 1)}`
-
-          content = <Redirect to={redirect}/>
-
-        } else {
-          content = (
-            <StravaContext.Provider value={this.state.auth}>
-              {children}
-            </StravaContext.Provider>
-          )
+        content = this.tokenRedirect(subPath, matchPath, (
+          <StravaContext.Provider value={this.state.auth}>
+            {children}
+          </StravaContext.Provider>
+        ))
   
-        }
-
         break
 
       default:
