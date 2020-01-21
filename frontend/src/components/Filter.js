@@ -8,19 +8,34 @@ export default class Filter extends Component {
   elevUnits = ['ft', 'm']
 
   presets = {
-    orange: {
-      distFrom: [20, 'mi'],
-      distTo: [30, 'mi'] 
-    },
     green: {
-      distFrom: [30, 'mi'],
-      distTo: [60, 'mi'] 
+      desc: 'Green',
+      colour: 'success',
+      values: {
+        distFrom: [20, 'mi'],
+        distTo: [30, 'mi']
+      }
+    },
+    orange: {
+      desc: 'Orange',
+      colour: 'warning',
+      values: {
+        distFrom: [30, 'mi'],
+        distTo: [60, 'mi']
+      }
     },
     blue: {
-      distFrom: [40, 'mi'],
-      distTo: [100, 'mi'] 
+      desc: 'Blue / Red',
+      colour: 'danger',
+      values: {
+        distFrom: [40, 'mi'],
+        distTo: [100, 'mi']
+      }
     },
-    clear: {}
+    clear: {
+      desc: 'Reset',
+      colour: 'secondary'
+    }
   }
 
   constructor(props) {
@@ -53,8 +68,10 @@ export default class Filter extends Component {
       ...this.defaultState()
     }
 
-    for (var prop in preset) {
-      newState[prop + '_Value'] = Math.floor(convertLength(preset[prop][0], preset[prop][1], this.state[prop + '_Unit']))
+    var values = preset.values || {}
+
+    for (var prop in values) {
+      newState[prop + '_Value'] = Math.floor(convertLength(values[prop][0], values[prop][1], this.state[prop + '_Unit']))
     }
 
     this.setState(newState)
@@ -178,6 +195,28 @@ export default class Filter extends Component {
   render() {
     var { srchText } = this.state
 
+    // Build preset buttons
+    var presetButtons = []
+
+    for (var presetName in this.presets) {
+      var preset = this.presets[presetName]
+
+      var onClickFn = ((presetName) => {
+        return (evt) => this.loadPreset(evt, presetName)
+      })(presetName)
+
+      presetButtons.push(
+        <button
+          key={presetName}
+          type='button'
+          className={`my-1 mr-1 btn btn-${preset.colour}`}
+          onClick={onClickFn}
+        >
+          {preset.desc}
+        </button>
+      )
+    }
+
     return (
       <form>
 
@@ -195,10 +234,7 @@ export default class Filter extends Component {
 
         <div className='row'>
           <div className='col-12 mt-1'>
-            <button type='button' className='my-1 mr-1 btn btn-warning' onClick={(evt) => this.loadPreset(evt, 'orange')}>Orange</button>
-            <button type='button' className='my-1 mr-1 btn btn-success' onClick={(evt) => this.loadPreset(evt, 'green')}>Green</button>
-            <button type='button' className='my-1 mr-1 btn btn-primary' onClick={(evt) => this.loadPreset(evt, 'blue')}>Blue / Red</button>
-            <button type='button' className='my-1 mr-1 btn btn-secondary' onClick={(evt) => this.loadPreset(evt, 'clear')}>Reset</button>
+            {presetButtons}
           </div>
         </div>
 
