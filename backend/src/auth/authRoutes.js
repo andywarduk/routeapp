@@ -1,12 +1,11 @@
 var express = require('express')
 var passport = require('passport')
-var axios = require('axios')
-var queryString = require('query-string')
 var jwt = require('jsonwebtoken');
 
 var response = require('../response')
-var permissions = require('./permissions')
+var permissions = require('../auth/permissions')
 var { permsEnum } = permissions
+var stravaOAuth = require('../strava/stravaOAuth')
 
 // User schemas
 var StravaUsers = require('../models/stravaUsers')
@@ -21,20 +20,7 @@ var router = express.Router()
 router.route('/auth').post(async function (req, res) {
   try {
     // Do strava authentication
-    var body = {
-      client_id: req.body.clientId,
-      code: req.body.token,
-      client_secret: process.env.STRAVA_CLIENT_SECRET,
-      grant_type: 'authorization_code'
-    }
-
-    var result = await axios.post('https://www.strava.com/oauth/token', queryString.stringify(body), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    })
-
-    var data = result.data
+    var data = await stravaOAuth.tokenExchange(req.body.clientId, req.body.token, process.env.STRAVA_CLIENT_SECRET)
 
     // Set up strava user document
     var stravaUser = data.athlete

@@ -2,10 +2,10 @@ var passport = require('passport')
 var JwtStrategy = require('passport-jwt').Strategy
 var ExtractJwt = require('passport-jwt').ExtractJwt;
 
+var stravaOAuth = require('../strava/stravaOAuth')
+
 // User schema
 var Users = require('../models/users')
-var UserPerms = require('../models/userPerms')
-var UserAuths = require('../models/userAuths')
 
 module.exports = () => {
 
@@ -24,6 +24,24 @@ module.exports = () => {
         .populate('perms')
         .populate('auth')
         .exec()
+
+      // Check authentication
+      var { auth } = user
+
+      var secsLeft = auth.expires_at - Math.floor(new Date().getTime() / 1000)
+
+      if (true || secsLeft <= 0) {
+        var newAuth = await stravaOAuth.refreshToken(process.env.STRAVA_CLIENT_ID, process.env.STRAVA_CLIENT_SECRET, auth.refresh_token)
+
+        auth.set({
+          access_token: newAuth.access_token,
+          refresh_token: newAuth.refresh_token,
+          expires_at: newAuth.expires_at,
+          expires_in: newAuth.expires_in
+        })
+
+        await auth.save()
+      }
 
       if (user) {
         // Got the user

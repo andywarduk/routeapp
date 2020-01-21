@@ -51,60 +51,46 @@ class StravaGateway extends Component {
 
   }
 
-  componentDidMount = async () => {
+  componentDidMount = () => {
     if (this.state.authStage === this.AUTHSTAGE_TOKEN) {
-      try {
-        // Finish authentication on the back end
-        var res = await this.authService.auth(process.env.REACT_APP_STRAVA_CLIENT_ID, this.state.token)
-
-        if (res.ok) {
-          this.setState({
-            authStage: this.AUTHSTAGE_AUTH,
-            auth: res.data
-          })  
-        } else {
-          this.setState({
-            authStage: this.AUTHSTAGE_TOKENFAIL
-          })  
-        }
-
-      } catch (err) {
-        // Failed
-        this.setState({
-          authStage: this.AUTHSTAGE_TOKENFAIL
-        })
-
-      }
-
+      this.finishAuth()
     }
   }
 
-  holdingPage = (message) => {
-    var { HoldPage } = this.props
+  finishAuth = async () => {
+    try {
+      // Finish authentication on the back end
+      var res = await this.authService.auth(process.env.REACT_APP_STRAVA_CLIENT_ID, this.state.token)
 
-    if (HoldPage && typeof(HoldPage) === 'function') {
-      return (
-        <HoldPage>
-          <div className='row mt-2'>
-            <div className='col'>
-              <span className='mt-2'>{message}</span>
-            </div>
-          </div>
-        </HoldPage>
-      )
+      if (res.ok) {
+        this.setState({
+          authStage: this.AUTHSTAGE_AUTH,
+          auth: res.data
+        })  
+      } else {
+        this.setState({
+          authStage: this.AUTHSTAGE_TOKENFAIL
+        })  
+      }
+
+    } catch (err) {
+      // Failed
+      this.setState({
+        authStage: this.AUTHSTAGE_TOKENFAIL
+      })
+
     }
-
-    return message
   }
 
   tokenRedirect = (subPath, matchPath, normalContent) => {
+    // If URL is the token URL then redirect to the original URL...
     if (subPath === `/${this.tokenPath}` || subPath.startsWith(`/${this.tokenPath}/`)) {
       var redirect = `${matchPath}${subPath.substr(this.tokenPath.length + 1)}`
 
       return <Redirect to={redirect}/>
-
     } 
     
+    // ... otherwise return the normal contents
     return normalContent
   }
 
@@ -140,7 +126,7 @@ class StravaGateway extends Component {
 
       case this.AUTHSTAGE_TOKEN:
         // Got token - finish authentication
-        content = this.holdingPage('Authenticating...')
+        content = this.holdingPage('Finishing authentication...')
 
         break
 
@@ -161,6 +147,7 @@ class StravaGateway extends Component {
         break
 
       default:
+        // Failure
         content = this.holdingPage('Authentication failure')
 
         break
@@ -169,6 +156,24 @@ class StravaGateway extends Component {
 
     return content
 
+  }
+
+  holdingPage = (message) => {
+    var { HoldPage } = this.props
+
+    if (HoldPage && typeof(HoldPage) === 'function') {
+      return (
+        <HoldPage>
+          <div className='row mt-2'>
+            <div className='col'>
+              <span className='mt-2'>{message}</span>
+            </div>
+          </div>
+        </HoldPage>
+      )
+    }
+
+    return message
   }
 
 }

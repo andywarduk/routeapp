@@ -1,10 +1,10 @@
 var express = require('express')
 var passport = require('passport')
-var axios = require('axios')
 
 var response = require('../response')
 var permissions = require('../auth/permissions')
 var { permsEnum } = permissions
+var stravaApi = require('./stravaApi')
 
 var router = express.Router()
 
@@ -13,18 +13,13 @@ router.route('/strava/route/:id').get(
   passport.authenticate('jwt', { session: false }),
   permissions.checkPermission(permsEnum.PERM_MODIFYROUTES),
   async function (req, res) {
-    var id = req.params.id
-
     try {
       var { access_token } = req.user.auth
+      var { id } = req.params
 
-      var result = await axios.get(`https://www.strava.com/api/v3/routes/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${access_token}`
-        }
-      })
+      var route = await stravaApi.getRoute(access_token, id)
 
-      res.json(result.data)
+      res.json(route)
 
     } catch (err) {
       response.errorResponse(res, err)

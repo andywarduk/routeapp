@@ -1,2 +1,2 @@
 Health check - https://docs.docker.com/compose/compose-file/#healthcheck
-Refresh Strava auth key
+https
