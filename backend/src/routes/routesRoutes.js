@@ -10,6 +10,40 @@ var router = express.Router()
 // Routes schema
 var Routes = require('../models/routes')
 
+regExEscape = (text) => {
+  var specials = [
+    '/', '.', '*', '+', '?', '|',
+    '(', ')', '[', ']', '{', '}', '\\'
+  ]
+
+  var sRE = new RegExp(
+    '(\\' + specials.join('|\\') + ')', 'g'
+  )
+
+  return text.replace(sRE, '\\$1');
+}
+
+buildPartialTextFilter = (filter, text) => {
+  var words = text.split(" ").map(regExEscape).filter((x) => x !== '')
+
+  var andClause = []
+
+  for (word of words) {
+    var orClause = []
+
+    orClause.push({name: new RegExp('^' + word, 'i')})
+    orClause.push({name: new RegExp(' ' + word, 'i')})
+    orClause.push({description: new RegExp('^' + word, 'i')})
+    orClause.push({description: new RegExp(' ' + word, 'i')})
+
+    andClause.push({
+      $or: orClause
+    })
+  }
+
+  filter.$and = andClause
+}
+
 // Search routes
 router.route('/routes').post(
   passport.authenticate('jwt', { session: false }),
@@ -27,8 +61,12 @@ router.route('/routes').post(
 
         // Text
         if (srchFilter.srchText && srchFilter.srchText != '') {
-          filter.$text = {
-            $search: srchFilter.srchText
+          if (!!srchFilter.partialWord) {
+            buildPartialTextFilter(filter, srchFilter.srchText)
+          } else {
+            filter.$text = {
+              $search: srchFilter.srchText
+            }
           }
         }
 

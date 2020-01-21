@@ -171,6 +171,7 @@ export default class Filter extends Component {
 
     if (state.srchText !== '')
       filter.srchText = state.srchText
+      filter.partialWord = true
 
     if (state.distFrom_Value !== '')
       filter.distFrom = convertLength(state.distFrom_Value, state.distFrom_Unit, 'm')
