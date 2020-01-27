@@ -161,7 +161,7 @@ export default class RouteMap extends Component {
 
     mapPolyLines = polyLines.reduce((arr, p, i) => {
       if (p.polyLine) {
-        var distRatio = ((p.distance - minDist) / distRange) * 512
+        var distRatio = (distRange === 0 ? 1 : ((p.distance - minDist) / distRange)) * 512
 
         var red = Math.min(255, distRatio)
         var green = Math.min(255, 512 - distRatio)
