@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import Distance from './Distance'
 import TimeSpan from './TimeSpan'
+import StravaRouteLink from './StravaRouteLink'
 
 export default class RouteRow extends Component {
 
@@ -10,13 +11,7 @@ export default class RouteRow extends Component {
     return (
       <tr>
         <td className={colClasses[0].join(' ')}>
-          <a
-            href={`http://www.strava.com/routes/${route.routeid}`}
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            {route.routeid}
-          </a>
+          <StravaRouteLink routeid={route.routeid}/>
         </td>
         <td className={colClasses[1].join(' ')}>{route.name}</td>
         <td className={colClasses[2].join(' ')}>{route.description}</td>

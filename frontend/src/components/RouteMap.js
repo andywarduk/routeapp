@@ -5,6 +5,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
 import StravaContext from './StravaContext'
+import Distance from './Distance'
+import StravaRouteLink from './StravaRouteLink'
 
 export default class RouteMap extends Component {
   static contextType = StravaContext
@@ -31,6 +33,7 @@ export default class RouteMap extends Component {
     var changed = false
 
     if (!loading) {
+      // Compare routes with polylines in state
       if (routes.length !== polyLines.length) {
         changed = true
       } else {
@@ -96,6 +99,7 @@ export default class RouteMap extends Component {
       return {
         routeid: r.routeid,
         distance: r.distance,
+        elevation_gain: r.elevation_gain,
         name: r.name,
         polyLine: null
       }
@@ -124,6 +128,8 @@ export default class RouteMap extends Component {
       return p
     })
 
+    newState.polyLines = polyLines
+
     // Calculate bounding box
     polyLines.reduce((newState, pl) => {
       if (pl.polyLine) {
@@ -143,8 +149,7 @@ export default class RouteMap extends Component {
       return newState
     }, newState)
 
-    newState.polyLines = polyLines
-
+    // Set the new state
     this.setState(newState)
   }
 
@@ -170,7 +175,33 @@ export default class RouteMap extends Component {
 
         arr.push(
           <Polyline key={i} color={colour} positions={p.polyLine}>
-            <Popup>{p.name}</Popup>
+            <Popup>
+              <StravaRouteLink routeid={p.routeid} desc={p.name}/>
+              <table style={{'margin': 'auto'}}>
+                <tbody>
+                  <tr>
+                    <td className='pr-1 text-right'>
+                      <Distance m={p.distance} unit='mi' dp='1' showUnit={false}/>
+                    </td>
+                    <td className='pr-1'>mi</td>
+                    <td className='pl-1 pr-1 text-right'>
+                      <Distance m={p.elevation_gain} unit='ft' dp='0' showUnit={false}/>
+                    </td>
+                    <td className='pr-1'>ft</td>
+                  </tr>
+                  <tr>
+                    <td className='pr-1 text-right'>
+                      <Distance m={p.distance} unit='km' dp='1' showUnit={false}/>
+                    </td>
+                    <td className='pr-1'>km</td>
+                    <td className='pr-1 pr-1 text-right'>
+                      <Distance m={p.elevation_gain} unit='m' dp='0' showUnit={false}/>
+                    </td>
+                    <td className='pr-1'>m</td>
+                  </tr>
+                </tbody>
+              </table>
+            </Popup>
           </Polyline>
         )
       }
