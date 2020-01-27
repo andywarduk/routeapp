@@ -21,7 +21,7 @@ export default class RouteMap extends Component {
       mapCentre
     }
 
-    this.defaultMinMaxLatLong(this.state)
+    this.defaultMinMax(this.state)
   }
 
   routesChanged = () => {
@@ -48,13 +48,16 @@ export default class RouteMap extends Component {
     }
   }
 
-  defaultMinMaxLatLong = (state) => {
+  defaultMinMax = (state) => {
     var { mapCentre } = this.state
 
     state.minLat = mapCentre[0]
     state.maxLat = mapCentre[0]
     state.minLon = mapCentre[1]
     state.maxLon = mapCentre[1]
+
+    state.minDist = 0
+    state.maxDist = 0
   }
 
   boundingBox = () => {
@@ -92,6 +95,7 @@ export default class RouteMap extends Component {
     var polyLines = routes.map((r) => {
       return {
         routeid: r.routeid,
+        distance: r.distance,
         name: r.name,
         polyLine: null
       }
@@ -110,7 +114,7 @@ export default class RouteMap extends Component {
       loading: false
     }
 
-    this.defaultMinMaxLatLong(newState)
+    this.defaultMinMax(newState)
 
     // Build polyline array
     polyLines = polyLines.map((p, i) => {
@@ -131,6 +135,9 @@ export default class RouteMap extends Component {
 
           return newState
         }, newState)
+
+        if (newState.minDist === 0 || pl.distance < newState.minDist) newState.minDist = pl.distance
+        if (pl.distance > newState.maxDist) newState.maxDist = pl.distance
       }
 
       return newState
@@ -142,16 +149,27 @@ export default class RouteMap extends Component {
   }
 
   render = () => {
-    var { polyLines, loading } = this.state
+    var { polyLines, loading, maxDist, minDist } = this.state
     var mapPolyLines
-    var mapProps = {}
+    var mapProps = {
+      scrollWheelZoom: false
+    }
 
     this.routesChanged()
 
+    var distRange = maxDist - minDist
+
     mapPolyLines = polyLines.reduce((arr, p, i) => {
       if (p.polyLine) {
+        var distRatio = ((p.distance - minDist) / distRange) * 512
+
+        var red = Math.min(255, distRatio)
+        var green = Math.min(255, 512 - distRatio)
+
+        var colour = `rgb(${red},${green},0)`
+
         arr.push(
-          <Polyline key={i} color='red' positions={p.polyLine}>
+          <Polyline key={i} color={colour} positions={p.polyLine}>
             <Popup>{p.name}</Popup>
           </Polyline>
         )
@@ -179,7 +197,7 @@ export default class RouteMap extends Component {
     return (
       <div>
         {loadingMsg}
-        <Map style={{'height': '100vw'}} {...mapProps}>
+        <Map style={{'height': '100vw', 'maxHeight': '100vh'}} {...mapProps}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
