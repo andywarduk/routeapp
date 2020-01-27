@@ -29,7 +29,7 @@ export default class Users extends Component {
   }
 
   loadUsers = async (newState) => {
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     var state = this.state
 

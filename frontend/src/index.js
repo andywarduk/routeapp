@@ -6,6 +6,8 @@ import App from './components/App'
 import * as serviceWorker from './serviceWorker'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle'
+import 'leaflet/dist/leaflet.css'
+import 'leaflet/dist/leaflet.js'
 
 ReactDOM.render(<App />, document.getElementById('root'))
 

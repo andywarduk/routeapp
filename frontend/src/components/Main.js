@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Switch, Route, withRouter } from 'react-router-dom'
 
-import FilteredRouteTable from './FilteredRouteTable'
+import FilteredRoutes from './FilteredRoutes'
 import AddRoutes from './AddRoutes'
 import UpdateRoutes from './UpdateRoutes'
 import UserRoutes from './UserRoutes'
@@ -14,7 +14,7 @@ class Main extends Component {
   static contextType = StravaContext
 
   render = () => {
-    var { picMed, fullName, perms } = this.context
+    var { picMed, fullName, perms } = this.context.auth
     var { location } = this.props
 
     var navItems = []
@@ -60,9 +60,9 @@ class Main extends Component {
     }
 
     if (haveLinks) {
-      addNavUrl('/', true, 'Home', FilteredRouteTable, false)
+      addNavUrl('/', true, 'Home', FilteredRoutes, false)
     } else {
-      addRoute('/', true, FilteredRouteTable)
+      addRoute('/', true, FilteredRoutes)
     }
 
     // Avatar

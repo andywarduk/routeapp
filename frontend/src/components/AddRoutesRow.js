@@ -30,7 +30,7 @@ export default class AddRoutesRow extends Component {
 
   downloadRoute = async () => {
     var { route, finishNotify } = this.props
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     try {
       var res = await this.stravaService.route(jwt, route.routeid)
@@ -67,7 +67,7 @@ export default class AddRoutesRow extends Component {
   uploadRoute = async () => {
     var { route, finishNotify } = this.props
     var { stravaRoute } = this.state
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     try {
       var res = await this.routeService.upsert(jwt, route.routeid, stravaRoute)

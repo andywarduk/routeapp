@@ -3,18 +3,23 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faKeyboard } from '@fortawesome/free-solid-svg-icons'
 
 import RouteTable from './RouteTable'
+import RouteMap from './RouteMap'
 import RouteService from '../RouteService'
 import Filter from './Filter'
 import StravaContext from './StravaContext'
 
-export default class FilteredRouteTable extends Component {
+export default class FilteredRoutes extends Component {
   static contextType = StravaContext
 
   debounceTime = 400 // 0.4 second debounce
 
+  VIEW_TABLE = 1
+  VIEW_MAP = 2
+
   constructor(props) {
     super(props)
 
+    // Initial state
     this.state = {
       loading: 0,
       request: 0,
@@ -22,9 +27,11 @@ export default class FilteredRouteTable extends Component {
       error: null,
       sortCol: 'routeid',
       sortAsc: true,
-      filter: {}
+      filter: {},
+      view: this.VIEW_TABLE,
     }
 
+    // Create route service
     this.routeService = new RouteService()
   }
 
@@ -36,7 +43,7 @@ export default class FilteredRouteTable extends Component {
   }
 
   requestData = async (newState) => {
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     // Allocate request number
     var requestNo = this.state.request + 1
@@ -56,7 +63,14 @@ export default class FilteredRouteTable extends Component {
 
     // Make request
     var res = await this.routeService.search(jwt, {
-      columns: ['routeid', 'name', 'description', 'distance', 'elevation_gain', 'estimated_moving_time'],
+      columns: [
+        'routeid',
+        'name',
+        'description',
+        'distance',
+        'elevation_gain',
+        'estimated_moving_time'
+      ],
       sort: {
         column: srchState.sortCol,
         ascending: srchState.sortAsc
@@ -65,25 +79,33 @@ export default class FilteredRouteTable extends Component {
     })
 
     // Process results
+    var nextState
+
     if (requestNo >= this.state.request) {
       if (res.ok) {
-        this.setState({
+        nextState = {
           routes: res.data,
           error: null,
           loading: Math.max(0, this.state.loading - 1)
-        })
+        }
+
       } else {
-        this.setState({
+        nextState = {
           routes: [],
           error: res.data.toString(),
           loading: Math.max(0, this.state.loading - 1)
-        })
+        }
+
       }
+
     } else {
-      this.setState({
+      nextState = {
         loading: Math.max(0, this.state.loading - 1)
-      })
+      }
+
     }
+
+    this.setState(nextState)
   }
 
   sort = (col) => {
@@ -101,6 +123,14 @@ export default class FilteredRouteTable extends Component {
         sortAsc: true
       })
     }
+  }
+
+  switchTab = (evt, newTab) => {
+    evt.preventDefault()
+
+    this.setState({
+      view: newTab
+    })
   }
 
   filterChanged = (filter, debounce) => {
@@ -127,11 +157,11 @@ export default class FilteredRouteTable extends Component {
     }
   }
 
-  render() {
-    var { routes, loading, error, sortCol, sortAsc, debounceTimer } = this.state
+  render = () => {
+    var { routes, loading, error, sortCol, sortAsc, debounceTimer, view } = this.state
 
     var count
-    var table = null
+    var content = null 
 
     routes = routes || []
 
@@ -151,15 +181,6 @@ export default class FilteredRouteTable extends Component {
       }
     }
 
-    if (routes.length > 0) {
-      table = <RouteTable
-        routes={routes}
-        sortCol={sortCol}
-        sortAsc={sortAsc}
-        sortCb={this.sort}
-      />
-    }
-
     var spinner = null
 
     if (loading > 0) {
@@ -168,15 +189,77 @@ export default class FilteredRouteTable extends Component {
       spinner = <FontAwesomeIcon icon={faKeyboard}/>
     }
 
+    var tabItems = []
+
+    var addTabItem = (type, desc) => {
+      var classes = null
+
+      if (type === view) {
+        classes = 'nav-link active'
+      } else {
+        classes = 'nav-link'
+      }
+
+      tabItems.push(
+        <li key={type} className='nav-item'>
+          <a className={classes} href='/' onClick={(evt) => this.switchTab(evt, type)}>{desc}</a>
+        </li>
+      )
+    }
+
+    addTabItem(this.VIEW_TABLE, 'Table')
+    addTabItem(this.VIEW_MAP, 'Map')
+
+    var spinnerSpan = null
+
+    if (spinner) {
+      spinnerSpan = <span className='mr-2'>{spinner}</span>
+    }
+
+    tabItems.push(
+      <li key={-1} className='nav-item ml-auto'>
+        <a className='nav-link disabled' href='/'>
+        {spinnerSpan}<span>{count}</span>
+        </a>
+      </li>
+    )
+
+    var tabs = (
+      <ul className='nav nav-tabs mt-2'>
+        {tabItems}
+      </ul>
+    )
+
+    switch (view) {
+    case this.VIEW_TABLE:
+      if (routes.length > 0) {
+        content = <RouteTable
+          routes={routes}
+          sortCol={sortCol}
+          sortAsc={sortAsc}
+          sortCb={this.sort}
+        />
+      }
+
+      break
+
+    case this.VIEW_MAP:
+      content = (
+        <RouteMap routes={routes}/>
+      )
+
+      break
+
+    default:
+      break
+
+    }
+
     return (
       <>
         <Filter filterCb={this.filterChanged}/>
-        <div className='row'>
-          <div className='col'>
-            <span className='mr-2'>{count}</span><span>{spinner}</span>
-          </div>
-        </div>
-        {table}
+        {tabs}
+        {content}
       </>
     )
   }

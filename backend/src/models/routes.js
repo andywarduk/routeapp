@@ -12,7 +12,11 @@ var Routes = new Schema({
   distance: Number,
   elevation_gain: Number,
   estimated_moving_time: Number,
-  updatedAt: String
+  updatedAt: String,
+  map: {
+    polyline: String,
+    summary_polyline: String
+  }
 }, {
   strict: false
 })

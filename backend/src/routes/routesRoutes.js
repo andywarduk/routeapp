@@ -183,6 +183,52 @@ router.route('/routes/:id').get(
   }
 )
 
+// Get route polyline
+router.route('/routes/:id/polyLine').get(
+  passport.authenticate('jwt', { session: false }),
+  permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
+  async function (req, res) {
+    try {
+      var id = req.params.id;
+
+      var doc = await Routes.findOne({
+        routeid: id
+      }, {
+        'map.polyline': 1
+      }).exec()
+
+      res.json(doc.map.polyline)
+
+    } catch (err) {
+      response.errorResponse(res, err)
+
+    }
+  }
+)
+
+// Get route summary polyline
+router.route('/routes/:id/summaryPolyLine').get(
+  passport.authenticate('jwt', { session: false }),
+  permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
+  async function (req, res) {
+    try {
+      var id = req.params.id;
+
+      var doc = await Routes.findOne({
+        routeid: id
+      }, {
+        'map.summary_polyline': 1
+      }).exec()
+
+      res.json(doc.map.summary_polyline)
+
+    } catch (err) {
+      response.errorResponse(res, err)
+
+    }
+  }
+)
+
 // Add or update route
 router.route('/routes/:id').post(
   passport.authenticate('jwt', { session: false }),

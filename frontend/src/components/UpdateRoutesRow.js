@@ -33,7 +33,7 @@ export default class UpdateRoutesRow extends Component {
 
   checkRoute = async () => {
     var { route } = this.props
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     try {
       // Set state to pending
@@ -75,7 +75,7 @@ export default class UpdateRoutesRow extends Component {
   }
 
   updateRoute = async () => {
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
     var { stravaRoute } = this.state
     var { route } = this.props
 
@@ -226,7 +226,7 @@ export default class UpdateRoutesRow extends Component {
 
   deleteRoute = async () => {
     var { route, deleteNotify } = this.props
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     try {
       // Set state to deleting
@@ -264,7 +264,7 @@ export default class UpdateRoutesRow extends Component {
   render = () => {
     var { route, autoCheck } = this.props
     var { status } = this.state
-    var { perms } = this.context
+    var { perms } = this.context.auth
 
     var buttons = []
 

@@ -31,7 +31,9 @@ export default class RouteTable extends Component {
       var th
       var key = headingCells.length
 
-      var style = {}
+      var style = {
+        'borderTop': 'none'
+      }
 
       if (col) {
         var icon
@@ -72,7 +74,7 @@ export default class RouteTable extends Component {
     })
 
     return (
-      <table className='table table-sm mt-2'>
+      <table className='table table-sm'>
         <thead>
           <tr>
             {headingCells}

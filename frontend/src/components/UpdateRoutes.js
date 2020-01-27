@@ -24,7 +24,7 @@ export default class UpdateRoutes extends Component {
   }
 
   componentDidMount = async () => {
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     // Make request
     var res = await this.routeService.search(jwt, {
@@ -52,7 +52,7 @@ export default class UpdateRoutes extends Component {
 
   render() {
     var { loading, error, routes, checkAll } = this.state
-    var { perms } = this.context
+    var { perms } = this.context.auth
 
     var permissions = new Permissions(perms)
 

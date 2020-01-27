@@ -1,9 +1,11 @@
 import React, { Component } from 'react'
 import { withRouter, Redirect } from 'react-router-dom'
 import queryString from 'query-string'
+import polyline from 'google-polyline'
 
 import StravaContext from './StravaContext'
 import AuthService from '../AuthService'
+import RouteService from '../RouteService'
 
 class StravaGateway extends Component {
 
@@ -25,11 +27,50 @@ class StravaGateway extends Component {
     var matchPath = match.path.replace(/\/+$/, "");
     var subPath = location.pathname.substr(matchPath.length)
 
+    // Create route service
+    this.routeService = new RouteService()
+
     // Set initial state
     this.state = {
       authStage: this.AUTHSTAGE_START,
       token: null,
-      auth: null
+      polyLineCache: {},
+      summaryPolyLineCache: {},
+      context: {
+        auth: null,
+
+        getCachedPolyLine: async (routeId) => {
+          var { polyLineCache } = this.state
+
+          if (polyLineCache[routeId]) return polyLineCache[routeId]
+      
+          var { jwt } = this.state.context.auth
+      
+          var polyLine = await this.routeService.getPolyline(jwt, routeId)
+      
+          if (!polyLine.ok) return null
+      
+          polyLineCache[routeId] = polyline.decode(polyLine.data)
+      
+          return polyLineCache[routeId]
+        },
+      
+        getCachedSummaryPolyLine: async (routeId) => {
+          var { summaryPolyLineCache } = this.state
+
+          if (summaryPolyLineCache[routeId]) return summaryPolyLineCache[routeId]
+      
+          var { jwt } = this.state.context.auth
+      
+          var polyLine = await this.routeService.getSummaryPolyline(jwt, routeId)
+      
+          if (!polyLine.ok) return null
+      
+          summaryPolyLineCache[routeId] = polyline.decode(polyLine.data)
+      
+          return summaryPolyLineCache[routeId]
+        }
+      }
     }
 
     // Create the auth service
@@ -65,7 +106,10 @@ class StravaGateway extends Component {
       if (res.ok) {
         this.setState({
           authStage: this.AUTHSTAGE_AUTH,
-          auth: res.data
+          context: {
+            ...this.state.context,
+            auth: res.data
+          }
         })  
       } else {
         this.setState({
@@ -139,11 +183,11 @@ class StravaGateway extends Component {
       case this.AUTHSTAGE_AUTH:
         // Authenticated
         content = this.tokenRedirect(subPath, matchPath, (
-          <StravaContext.Provider value={this.state.auth}>
+          <StravaContext.Provider value={this.state.context}>
             {children}
           </StravaContext.Provider>
         ))
-  
+
         break
 
       default:

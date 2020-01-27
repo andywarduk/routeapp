@@ -11,10 +11,13 @@
     "@testing-library/user-event": "^7.1.2",
     "axios": "^0.19.1",
     "bootstrap": "^4.4.1",
+    "google-polyline": "^1.0.3",
     "jquery": "^3.4.1",
+    "leaflet": "^1.6.0",
     "query-string": "^6.10.1",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
+    "react-leaflet": "^2.6.1",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.3.0"
   },

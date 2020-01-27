@@ -183,7 +183,7 @@ class UserDetail extends Component {
   }
 
   loadUser = async (id) => {
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     this.setState({
       userLoading: true
@@ -208,7 +208,7 @@ class UserDetail extends Component {
   }
 
   loadPermKeys = async () => {
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     this.setState({
       permKeysLoading: true
@@ -255,7 +255,7 @@ class UserDetail extends Component {
 
     var { user } = this.state
     var { perms } = user
-    var { jwt } = this.context
+    var { jwt } = this.context.auth
 
     this.setState({
       saving: true
