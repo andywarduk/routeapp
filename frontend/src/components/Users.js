@@ -17,7 +17,7 @@ export default class Users extends Component {
     this.state = {
       users: [],
       error: null,
-      sortCol: 'athleteid',
+      sortCol: 'lastname',
       sortAsc: true
     }
 
@@ -137,7 +137,7 @@ export default class Users extends Component {
     }
 
     // Set up heading cells
-    addHeadingCell('athleteid', 'Athlete', 1, ['text-nowrap'], [], [])
+    addHeadingCell('id', 'Athlete', 1, ['text-nowrap'], [], [])
     addHeadingCell('firstname', 'First Name', 1, ['text-nowrap'], [], [])
     addHeadingCell('lastname', 'Last Name', 1, ['text-nowrap'], [], [])
     addHeadingCell(null, 'Location', 1, ['d-none', 'd-md-table-cell'], ['text-nowrap'], [])

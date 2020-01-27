@@ -19,8 +19,6 @@ router.route('/users').post(
     try {
       var searchOptions = req.body
 
-      var options = null
-
       // Projection
       var projection = null
 
@@ -35,20 +33,8 @@ router.route('/users').post(
         }
       }
 
-      // Sort
-      if (searchOptions.sort) {
-        options = options || {}
-
-        var col = searchOptions.sort.column
-        var order = searchOptions.sort.ascending ? 1 : -1
-
-        options.sort = {
-          [col]: order
-        }
-      }
-
       // Do search
-      var users = Users.find({}, projection, options)
+      var users = Users.find({}, projection)
         .populate('stravaUser')
 
       if (searchOptions.perms === true) {
@@ -56,6 +42,38 @@ router.route('/users').post(
       }
 
       users = await users.exec()
+
+      // Sort
+      if (searchOptions.sort) {
+        var col = searchOptions.sort.column
+        var order = searchOptions.sort.ascending ? 1 : -1
+
+        var compareCol = (a, b, cols) => {
+          var thisCol = cols[cols.length - 1]
+          if (a.stravaUser[thisCol] === b.stravaUser[thisCol]) {
+            switch (thisCol) {
+            case 'lastname':
+              if (cols[cols.length - 2] !== 'firstname') {
+                cols.push('firstname')
+                return compareCol(a, b, cols)
+              }
+              break
+            case 'firstname':
+              if (cols[cols.length - 2] !== 'lastname') {
+                cols.push('lastname')
+                return compareCol(a, b, cols)
+              }
+              break
+            }
+
+            return compareCol(a, b, ['id'])
+          }
+
+          return (a.stravaUser[col] < b.stravaUser[col] ? -1 : 1) * order
+        }
+
+        users.sort((a, b) => compareCol(a, b, [col]))
+      }
 
       // Return JSON document
       res.json(users)

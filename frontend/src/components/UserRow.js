@@ -61,7 +61,7 @@ class UserRow extends Component {
 
     return (
       <tr onClick={this.click} style={{cursor: 'pointer'}}>
-        <td className={colClasses[0].join(' ')}>{user.athleteid}</td>
+        <td className={colClasses[0].join(' ')}>{stravaUser.id}</td>
         <td className={colClasses[1].join(' ')}>{stravaUser.firstname}</td>
         <td className={colClasses[2].join(' ')}>{stravaUser.lastname}</td>
         <td className={colClasses[3].join(' ')}>{this.commaSep(stravaUser.city, stravaUser.state, stravaUser.country)}</td>
