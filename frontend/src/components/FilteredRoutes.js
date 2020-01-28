@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faKeyboard } from '@fortawesome/free-solid-svg-icons'
 
+import FilteredRoutesTab from './FilteredRoutesTab'
 import RouteTable from './RouteTable'
 import RouteMap from './RouteMap'
 import RouteService from '../RouteService'
@@ -11,10 +12,10 @@ import StravaContext from './StravaContext'
 export default class FilteredRoutes extends Component {
   static contextType = StravaContext
 
-  debounceTime = 400 // 0.4 second debounce
+  static VIEW_TABLE = 1
+  static VIEW_MAP = 2
 
-  VIEW_TABLE = 1
-  VIEW_MAP = 2
+  debounceTime = 400 // 0.4 second debounce
 
   constructor(props) {
     super(props)
@@ -25,10 +26,10 @@ export default class FilteredRoutes extends Component {
       request: 0,
       routes: [],
       error: null,
-      sortCol: 'routeid',
+      sortCol: 'name',
       sortAsc: true,
       filter: {},
-      view: this.VIEW_TABLE,
+      view: FilteredRoutes.VIEW_TABLE,
     }
 
     // Create route service
@@ -125,9 +126,7 @@ export default class FilteredRoutes extends Component {
     }
   }
 
-  switchTab = (evt, newTab) => {
-    evt.preventDefault()
-
+  tabSwitched = (newTab) => {
     this.setState({
       view: newTab
     })
@@ -160,27 +159,9 @@ export default class FilteredRoutes extends Component {
   render = () => {
     var { routes, loading, error, sortCol, sortAsc, debounceTimer, view } = this.state
 
-    var count
     var content = null 
 
-    routes = routes || []
-
-    if (error) {
-      count = error.toString()
-    } else {
-      switch (routes.length) {
-        case 0:
-          count = 'No routes found'
-          break
-        case 1:
-          count = '1 route found'
-          break
-        default:
-          count = `${routes.length} routes found`
-          break
-      }
-    }
-
+    // Calculate spinner
     var spinner = null
 
     if (loading > 0) {
@@ -189,49 +170,9 @@ export default class FilteredRoutes extends Component {
       spinner = <FontAwesomeIcon icon={faKeyboard}/>
     }
 
-    var tabItems = []
-
-    var addTabItem = (type, desc) => {
-      var classes = null
-
-      if (type === view) {
-        classes = 'nav-link active'
-      } else {
-        classes = 'nav-link'
-      }
-
-      tabItems.push(
-        <li key={type} className='nav-item'>
-          <a className={classes} href='/' onClick={(evt) => this.switchTab(evt, type)}>{desc}</a>
-        </li>
-      )
-    }
-
-    addTabItem(this.VIEW_TABLE, 'Table')
-    addTabItem(this.VIEW_MAP, 'Map')
-
-    var spinnerSpan = null
-
-    if (spinner) {
-      spinnerSpan = <span className='mr-2'>{spinner}</span>
-    }
-
-    tabItems.push(
-      <li key={-1} className='nav-item ml-auto'>
-        <a className='nav-link disabled' href='/'>
-        {spinnerSpan}<span>{count}</span>
-        </a>
-      </li>
-    )
-
-    var tabs = (
-      <ul className='nav nav-tabs mt-2'>
-        {tabItems}
-      </ul>
-    )
-
+    // Generate content for the current view
     switch (view) {
-    case this.VIEW_TABLE:
+    case FilteredRoutes.VIEW_TABLE:
       if (routes.length > 0) {
         content = <RouteTable
           routes={routes}
@@ -243,7 +184,7 @@ export default class FilteredRoutes extends Component {
 
       break
 
-    case this.VIEW_MAP:
+    case FilteredRoutes.VIEW_MAP:
       content = (
         <RouteMap routes={routes}/>
       )
@@ -258,7 +199,13 @@ export default class FilteredRoutes extends Component {
     return (
       <>
         <Filter filterCb={this.filterChanged}/>
-        {tabs}
+        <FilteredRoutesTab
+          view={view}
+          routes={routes}
+          error={error}
+          spinner={spinner}
+          tabSwitched={this.tabSwitched}
+        />
         {content}
       </>
     )
