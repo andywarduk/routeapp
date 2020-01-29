@@ -9,4 +9,4 @@ EXPOSE 6200
 
 ENV NODE_ENV development
 
-CMD [ "npm", "start" ]
+CMD [ "npm", "run", "watch" ]
