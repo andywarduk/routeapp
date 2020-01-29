@@ -1,4 +1,4 @@
-var permsEnum = {
+const permsEnum = {
   PERM_ADMIN: 'admin',
   PERM_VIEWROUTES: 'viewRoutes',
   PERM_MODIFYROUTES: 'modifyRoutes',
@@ -6,7 +6,7 @@ var permsEnum = {
   PERM_DELETEROUTES: 'deleteRoutes'
 }
 
-var permsDesc = {
+const permsDesc = {
   PERM_ADMIN: 'Administrator',
   PERM_VIEWROUTES: 'View routes',
   PERM_MODIFYROUTES: 'Modify routes',
@@ -21,14 +21,14 @@ module.exports = {
 
   checkPermission: (...perm) => {
     return (req, res, next) => {
-      var { user } = req
-      var perms = user.perms || {}
-      var ok = false
+      const { user } = req
+      const perms = user.perms || {}
+      let ok = false
 
       if (perms[permsEnum.PERM_ADMIN]) {
         ok = true
       } else {
-        for (p of perm) {
+        for (const p of perm) {
           if (perms[p]) {
             ok = true
             break

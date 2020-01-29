@@ -1,11 +1,11 @@
-var mongoose = require('mongoose')
-var Schema = mongoose.Schema
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
 
-var permissions = require('../auth/permissions')
-var { permsEnum } = permissions
+const permissions = require('../auth/permissions')
+const { permsEnum } = permissions
 
 // Schema
-var UserPerms = new Schema({
+const UserPerms = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Users'
@@ -13,7 +13,7 @@ var UserPerms = new Schema({
 })
 
 // Add permissions
-for (k of Object.keys(permsEnum)) {
+for (const k of Object.keys(permsEnum)) {
   UserPerms.add({
     [permsEnum[k]]: Boolean
   })
@@ -21,13 +21,13 @@ for (k of Object.keys(permsEnum)) {
 
 UserPerms.set('toJSON', {
   transform: (doc, ret) => {
-    var permsList = []
+    const permsList = []
 
-    for (k of Object.keys(permsEnum)) {
+    for (const k of Object.keys(permsEnum)) {
       permsList.push(permsEnum[k])
     }
 
-    for (k of Object.keys(ret)) {
+    for (const k of Object.keys(ret)) {
       if (permsList.indexOf(k) < 0) delete ret[k]
     }
   }

@@ -1,11 +1,11 @@
 // Libraries
-var express = require('express')
-var mongoose = require('mongoose')
-var bodyParser = require('body-parser')
-var cors = require('cors')
-var dotenv = require('dotenv')
+const express = require('express')
+const mongoose = require('mongoose')
+const bodyParser = require('body-parser')
+const cors = require('cors')
+const dotenv = require('dotenv')
 
-var setupJwtAuth = require('./src/auth/jwtAuth')
+const setupJwtAuth = require('./src/auth/jwtAuth')
 
 main()
 
@@ -15,14 +15,14 @@ async function main()
   dotenv.config()
 
   // Server configuration
-  var basePath = '/api'
-  var port = 6200
+  const basePath = '/api'
+  const port = 6200
 
   // Connect to DB
-  var connected = false
-  var connTry = 0
+  let connected = false
+  let connTry = 0
 
-  var dbHost
+  let dbHost
 
   // Set up mongoose
   mongoose.set('useNewUrlParser', true);
@@ -37,7 +37,7 @@ async function main()
   }
 
   // Build user name + password string
-  var dbUserPwd = ''
+  let dbUserPwd = ''
 
   if (process.env.MONGO_INITDB_ROOT_USERNAME && process.env.MONGO_INITDB_ROOT_USERNAME !== '') {
     if (process.env.MONGO_INITDB_ROOT_PASSWORD && process.env.MONGO_INITDB_ROOT_PASSWORD !== '') {
@@ -57,21 +57,19 @@ async function main()
     }
   }
 
-  if (!connected) {
-    process.exit(1)
-  }
+  if (!connected) throw new Error('Failed to connect to the database')
 
   // Set up jwt auth
   setupJwtAuth()
 
   // Routes and backend functions
-  var routesRoutes = require('./src/routes/routesRoutes')
-  var authRoutes = require('./src/auth/authRoutes')
-  var stravaRoutes = require('./src/strava/stravaRoutes')
-  var usersRoutes = require('./src/users/usersRoutes')
+  const routesRoutes = require('./src/routes/routesRoutes')
+  const authRoutes = require('./src/auth/authRoutes')
+  const stravaRoutes = require('./src/strava/stravaRoutes')
+  const usersRoutes = require('./src/users/usersRoutes')
 
   // App Instance
-  var app = express()
+  const app = express()
   app.use(express.static('public'))
   app.use(cors())
   app.use(bodyParser.json({
@@ -90,10 +88,10 @@ async function main()
 }
 
 function delay(ms){
-  var ctr
-  var rej
+  let ctr
+  let rej
 
-  var p = new Promise(function (resolve, reject) {
+  const p = new Promise(function (resolve, reject) {
       ctr = setTimeout(resolve, ms);
       rej = reject;
   })

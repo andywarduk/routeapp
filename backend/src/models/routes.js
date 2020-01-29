@@ -1,8 +1,8 @@
-var mongoose = require('mongoose')
-var Schema = mongoose.Schema
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
 
 // Schema
-var Routes = new Schema({
+const Routes = new Schema({
   routeid: {
     type: Number,
     unique: true

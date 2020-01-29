@@ -1,15 +1,15 @@
-var express = require('express')
-var passport = require('passport')
+const express = require('express')
+const passport = require('passport')
 
-var response = require('../response')
-var permissions = require('../auth/permissions')
-var { permsEnum } = permissions
+const response = require('../response')
+const permissions = require('../auth/permissions')
+const { permsEnum } = permissions
 
-var router = express.Router()
+const router = express.Router()
 
 // Users schema
-var Users = require('../models/users')
-var UserPerms = require('../models/userPerms')
+const Users = require('../models/users')
+const UserPerms = require('../models/userPerms')
 
 // Get users
 router.route('/users').post(
@@ -17,13 +17,13 @@ router.route('/users').post(
   permissions.checkPermission(permsEnum.PERM_ADMIN),
   async function (req, res) {
     try {
-      var searchOptions = req.body
+      const searchOptions = req.body
 
       // Projection
-      var projection = null
+      let projection = null
 
       if (searchOptions.columns) {
-        var columns = searchOptions.columns
+        const columns = searchOptions.columns
 
         if (Array.isArray(columns)) {
           projection = columns.reduce((acc, cur) => {
@@ -34,7 +34,7 @@ router.route('/users').post(
       }
 
       // Do search
-      var users = Users.find({}, projection)
+      let users = Users.find({}, projection)
         .populate('stravaUser')
 
       if (searchOptions.perms === true) {
@@ -45,11 +45,11 @@ router.route('/users').post(
 
       // Sort
       if (searchOptions.sort) {
-        var col = searchOptions.sort.column
-        var order = searchOptions.sort.ascending ? 1 : -1
+        const col = searchOptions.sort.column
+        const order = searchOptions.sort.ascending ? 1 : -1
 
-        var compareCol = (a, b, cols) => {
-          var thisCol = cols[cols.length - 1]
+        const compareCol = (a, b, cols) => {
+          const thisCol = cols[cols.length - 1]
           if (a.stravaUser[thisCol] === b.stravaUser[thisCol]) {
             switch (thisCol) {
             case 'lastname':
@@ -91,9 +91,9 @@ router.route('/users/:id').get(
   permissions.checkPermission(permsEnum.PERM_ADMIN),
   async function (req, res) {
     try {
-      var id = req.params.id;
+      const id = req.params.id;
 
-      var doc = await Users.findOne({
+      const doc = await Users.findOne({
         athleteid: id
       })
         .populate('stravaUser')
@@ -115,15 +115,15 @@ router.route('/users/:id/perms').put(
   permissions.checkPermission(permsEnum.PERM_ADMIN),
   async function (req, res) {
     try {
-      var id = req.params.id;
+      const id = req.params.id;
 
       // Load user
-      var user = await Users.findOne({
+      const user = await Users.findOne({
         athleteid: id
       }).exec()
 
       // Update permissions
-      perms = {
+      const perms = {
         user: user._id,
         ...req.body
       }

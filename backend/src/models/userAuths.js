@@ -1,8 +1,8 @@
-var mongoose = require('mongoose')
-var Schema = mongoose.Schema
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
 
 // Schema
-var UserAuths = new Schema({
+const UserAuths = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Users'

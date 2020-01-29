@@ -1,11 +1,11 @@
-var passport = require('passport')
-var JwtStrategy = require('passport-jwt').Strategy
-var ExtractJwt = require('passport-jwt').ExtractJwt;
+const passport = require('passport')
+const JwtStrategy = require('passport-jwt').Strategy
+const ExtractJwt = require('passport-jwt').ExtractJwt;
 
-var stravaOAuth = require('../strava/stravaOAuth')
+const stravaOAuth = require('../strava/stravaOAuth')
 
 // User schema
-var Users = require('../models/users')
+const Users = require('../models/users')
 
 module.exports = () => {
 
@@ -17,7 +17,7 @@ module.exports = () => {
     // Try and load the user details
     try {
       // User document
-      var user = await Users.findOne({
+      const user = await Users.findOne({
         athleteid: jwt_payload.athleteId
       })
         .populate('stravaUser')
@@ -26,12 +26,12 @@ module.exports = () => {
         .exec()
 
       // Check authentication
-      var { auth } = user
+      const { auth } = user
 
-      var secsLeft = auth.expires_at - Math.floor(new Date().getTime() / 1000)
+      const secsLeft = auth.expires_at - Math.floor(new Date().getTime() / 1000)
 
-      if (true || secsLeft <= 0) {
-        var newAuth = await stravaOAuth.refreshToken(process.env.STRAVA_CLIENT_ID, process.env.STRAVA_CLIENT_SECRET, auth.refresh_token)
+      if (secsLeft <= 0) {
+        const newAuth = await stravaOAuth.refreshToken(process.env.STRAVA_CLIENT_ID, process.env.STRAVA_CLIENT_SECRET, auth.refresh_token)
 
         auth.set({
           access_token: newAuth.access_token,

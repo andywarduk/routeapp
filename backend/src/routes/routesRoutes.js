@@ -1,35 +1,35 @@
-var express = require('express')
-var passport = require('passport')
+const express = require('express')
+const passport = require('passport')
 
-var response = require('../response')
-var permissions = require('../auth/permissions')
-var { permsEnum } = permissions
+const response = require('../response')
+const permissions = require('../auth/permissions')
+const { permsEnum } = permissions
 
-var router = express.Router()
+const router = express.Router()
 
 // Routes schema
-var Routes = require('../models/routes')
+const Routes = require('../models/routes')
 
-regExEscape = (text) => {
-  var specials = [
+const regExEscape = (text) => {
+  const specials = [
     '/', '.', '*', '+', '?', '|',
     '(', ')', '[', ']', '{', '}', '\\'
   ]
 
-  var sRE = new RegExp(
+  const sRE = new RegExp(
     '(\\' + specials.join('|\\') + ')', 'g'
   )
 
   return text.replace(sRE, '\\$1');
 }
 
-buildPartialTextFilter = (filter, text) => {
-  var words = text.split(" ").map(regExEscape).filter((x) => x !== '')
+const buildPartialTextFilter = (filter, text) => {
+  const words = text.split(" ").map(regExEscape).filter((x) => x !== '')
 
-  var andClause = []
+  const andClause = []
 
-  for (word of words) {
-    var orClause = []
+  for (const word of words) {
+    const orClause = []
 
     orClause.push({name: new RegExp('^' + word, 'i')})
     orClause.push({name: new RegExp(' ' + word, 'i')})
@@ -50,18 +50,18 @@ router.route('/routes').post(
   permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
   async function (req, res) {
     try {
-      var searchOptions = req.body
+      const searchOptions = req.body
 
-      var filter = {}
-      var options = null
+      const filter = {}
+      let options = null
 
       // Filter
       if (searchOptions.filter) {
-        var srchFilter = searchOptions.filter
+        const srchFilter = searchOptions.filter
 
         // Text
         if (srchFilter.srchText && srchFilter.srchText != '') {
-          if (!!srchFilter.partialWord) {
+          if (srchFilter.partialWord) {
             buildPartialTextFilter(filter, srchFilter.srchText)
           } else {
             filter.$text = {
@@ -102,10 +102,10 @@ router.route('/routes').post(
       }
 
       // Projection
-      var projection = null
+      let projection = null
 
       if (searchOptions.columns) {
-        var columns = searchOptions.columns
+        const columns = searchOptions.columns
 
         if (Array.isArray(columns)) {
           projection = columns.reduce((acc, cur) => {
@@ -119,8 +119,8 @@ router.route('/routes').post(
       if (searchOptions.sort) {
         options = options || {}
 
-        var col = searchOptions.sort.column
-        var order = searchOptions.sort.ascending ? 1 : -1
+        const col = searchOptions.sort.column
+        const order = searchOptions.sort.ascending ? 1 : -1
 
         options.sort = {
           [col]: order
@@ -128,7 +128,7 @@ router.route('/routes').post(
       }
 
       // Do search
-      var routes = await Routes.find(filter, projection, options).exec()
+      const routes = await Routes.find(filter, projection, options).exec()
 
       // Return JSON document
       res.json(routes)
@@ -145,7 +145,7 @@ router.route('/routes/list').get(
   async function (req, res) {
     try {
       // Do search
-      var list = await Routes.find({}, {
+      const list = await Routes.find({}, {
         routeid: 1
       }, {
         sort: {
@@ -168,9 +168,9 @@ router.route('/routes/:id').get(
   permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
   async function (req, res) {
     try {
-      var id = req.params.id;
+      const id = req.params.id;
 
-      var doc = await Routes.findOne({
+      const doc = await Routes.findOne({
         routeid: id
       }).exec()
 
@@ -189,9 +189,9 @@ router.route('/routes/:id/polyLine').get(
   permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
   async function (req, res) {
     try {
-      var id = req.params.id;
+      const id = req.params.id;
 
-      var doc = await Routes.findOne({
+      const doc = await Routes.findOne({
         routeid: id
       }, {
         'map.polyline': 1
@@ -212,9 +212,9 @@ router.route('/routes/:id/summaryPolyLine').get(
   permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
   async function (req, res) {
     try {
-      var id = req.params.id;
+      const id = req.params.id;
 
-      var doc = await Routes.findOne({
+      const doc = await Routes.findOne({
         routeid: id
       }, {
         'map.summary_polyline': 1
@@ -234,9 +234,9 @@ router.route('/routes/:id').post(
   passport.authenticate('jwt', { session: false }),
   permissions.checkPermission(permsEnum.PERM_MODIFYROUTES),
   async function (req, res) {
-    var id = req.params.id
+    const id = req.params.id
 
-    var doc = {
+    const doc = {
       ...req.body,
       routeid: id
     }
@@ -263,9 +263,9 @@ router.route('/routes/:id').put(
   passport.authenticate('jwt', { session: false }),
   permissions.checkPermission(permsEnum.PERM_MODIFYROUTES),
   async function (req, res) {
-    var id = req.params.id
+    const id = req.params.id
 
-    var doc = {
+    const doc = {
       ...req.body,
       routeid: id
     }
@@ -291,7 +291,7 @@ router.route('/routes/:id').delete(
   passport.authenticate('jwt', { session: false }),
   permissions.checkPermission(permsEnum.PERM_DELETEROUTES),
   async function (req, res) {
-    var id = req.params.id
+    const id = req.params.id
 
     try {
       await Routes.findOneAndRemove({

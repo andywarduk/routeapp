@@ -1,29 +1,29 @@
-var express = require('express')
-var passport = require('passport')
-var jwt = require('jsonwebtoken');
+const express = require('express')
+const passport = require('passport')
+const jwt = require('jsonwebtoken');
 
-var response = require('../response')
-var permissions = require('../auth/permissions')
-var { permsEnum } = permissions
-var stravaOAuth = require('../strava/stravaOAuth')
+const response = require('../response')
+const permissions = require('../auth/permissions')
+const { permsEnum } = permissions
+const stravaOAuth = require('../strava/stravaOAuth')
 
 // User schemas
-var StravaUsers = require('../models/stravaUsers')
-var Users = require('../models/users')
-var UserPerms = require('../models/userPerms')
-var UserAuths = require('../models/userAuths')
+const StravaUsers = require('../models/stravaUsers')
+const Users = require('../models/users')
+const UserPerms = require('../models/userPerms')
+const UserAuths = require('../models/userAuths')
 
 // Create router
-var router = express.Router()
+const router = express.Router()
 
 // Authenticate
 router.route('/auth').post(async function (req, res) {
   try {
     // Do strava authentication
-    var data = await stravaOAuth.tokenExchange(req.body.clientId, req.body.token, process.env.STRAVA_CLIENT_SECRET)
+    const data = await stravaOAuth.tokenExchange(req.body.clientId, req.body.token, process.env.STRAVA_CLIENT_SECRET)
 
     // Set up strava user document
-    var stravaUser = data.athlete
+    let stravaUser = data.athlete
 
     // Always overwrite strava user with the new document
     stravaUser = await StravaUsers.findOneAndUpdate({
@@ -35,7 +35,7 @@ router.route('/auth').post(async function (req, res) {
     }).exec()
 
     // Load user
-    user = await Users.findOne({
+    let user = await Users.findOne({
       athleteid: stravaUser.id
     })
       .populate('perms')
@@ -57,7 +57,7 @@ router.route('/auth').post(async function (req, res) {
       })
 
       // Make app owner an admin, all others get viewRoutes by default
-      var superAthlete = parseInt(process.env.SUPER_ATHLETE)
+      const superAthlete = parseInt(process.env.SUPER_ATHLETE)
 
       if (!!superAthlete && stravaUser.id === superAthlete) {
         user.perms[permsEnum.PERM_ADMIN] = true
@@ -94,11 +94,11 @@ router.route('/auth').post(async function (req, res) {
     await user.save()
 
     // Build jwt
-    var jwtPayload = {
+    const jwtPayload = {
       athleteId: stravaUser.id
     }
 
-    var token = jwt.sign(jwtPayload, process.env.JWT_SECRET, {
+    const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, {
       issuer: 'corsham.cc'
     })
 
@@ -124,9 +124,9 @@ router.route('/auth/permkeys').get(
   permissions.checkPermission(permsEnum.PERM_ADMIN),
   async function (req, res) {
     try {
-      var permKeys = []
+      const permKeys = []
 
-      for (var k of Object.keys(permissions.permsEnum)) {
+      for (const k of Object.keys(permissions.permsEnum)) {
         permKeys.push({
           id: permissions.permsEnum[k],
           desc: permissions.permsDesc[k]

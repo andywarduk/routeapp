@@ -8,7 +8,7 @@ module.exports = {
   },
 
   errorResponse: (res, err) => {
-    var code = 500
+    let code = 500
 
     if (process.env.NODE_ENV != 'production') {
       console.log(err)
