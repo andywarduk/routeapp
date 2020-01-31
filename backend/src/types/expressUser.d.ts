@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars,@typescript-eslint/no-unused-vars
 import { IUser } from "../models/users"
 
 export {}
