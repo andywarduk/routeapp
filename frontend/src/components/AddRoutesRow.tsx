@@ -30,7 +30,7 @@ interface IState {
 // Class definition
 
 export default class AddRoutesRow extends Component<IProps, IState> {
-  static contextType = StravaContext
+  context!: React.ContextType<typeof StravaContext>
 
   stravaService: StravaService
   routeService: RouteService
@@ -50,9 +50,13 @@ export default class AddRoutesRow extends Component<IProps, IState> {
 
   downloadRoute = async () => {
     const { route, finishNotify } = this.props
-    const { jwt } = this.context.auth
+    const { auth } = this.context
 
     try {
+      if (!auth) throw new Error('Not authenticated')
+
+      const { jwt } = auth
+
       const res = await this.stravaService.route(jwt, route.routeid)
 
       if (res.ok) {
@@ -87,10 +91,13 @@ export default class AddRoutesRow extends Component<IProps, IState> {
   uploadRoute = async () => {
     const { route, finishNotify } = this.props
     const { stravaRoute } = this.state
-    const { jwt } = this.context.auth
+    const { auth } = this.context
 
     try {
       if (!stravaRoute) throw new Error('stravaRoute empty')
+      if (!auth) throw new Error('Not authenticated')
+
+      const { jwt } = auth
 
       const res = await this.routeService.upsert(jwt, route.routeid, stravaRoute)
 

@@ -15,4 +15,4 @@ const defaultContext: IStravaContext = {
   getCachedSummaryPolyLine: async () => null
 }
 
-export default React.createContext(defaultContext)
+export default React.createContext<IStravaContext>(defaultContext)

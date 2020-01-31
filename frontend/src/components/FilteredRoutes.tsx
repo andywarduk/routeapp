@@ -34,7 +34,7 @@ interface IState {
 // Class definition
 
 export default class FilteredRoutes extends Component<IProps, IState> {
-  static contextType = StravaContext
+  context!: React.ContextType<typeof StravaContext>
 
   static debounceTime = 400 // 0.4 second debounce
 
@@ -68,70 +68,76 @@ export default class FilteredRoutes extends Component<IProps, IState> {
   }
 
   requestData = async (newState: Partial<IState>) => {
-    const { jwt } = this.context.auth
+    const { auth } = this.context
 
-    // Allocate request number
-    const requestNo = this.state.request + 1
+    if (auth) {
+      const { jwt } = auth
 
-    // Build full state for search
-    const srchState = {
-      ...this.state,
-      ...newState,
-      loading: this.state.loading + 1,
-      request: requestNo
-    }
+      // Allocate request number
+      const requestNo = this.state.request + 1
 
-    // Set state
-    this.setState(srchState)
+      // Build full state for search
+      const srchState = {
+        ...this.state,
+        ...newState,
+        loading: this.state.loading + 1,
+        request: requestNo
+      }
 
-    // Make request
-    const res = await this.routeService.search(jwt, {
-      columns: [
-        'routeid',
-        'name',
-        'description',
-        'distance',
-        'elevation_gain',
-        'estimated_moving_time'
-      ],
-      sort: {
-        column: srchState.sortCol,
-        ascending: srchState.sortAsc
-      },
-      filter: srchState.filter
-    })
+      // Set state
+      this.setState(srchState)
 
-    // Process results
-    let nextState: Partial<IState>
+      // Make request
+      const res = await this.routeService.search(jwt, {
+        columns: [
+          'routeid',
+          'name',
+          'description',
+          'distance',
+          'elevation_gain',
+          'estimated_moving_time'
+        ],
+        sort: {
+          column: srchState.sortCol,
+          ascending: srchState.sortAsc
+        },
+        filter: srchState.filter
+      })
 
-    if (requestNo >= this.state.request) {
-      if (res.ok) {
-        nextState = {
-          routes: res.data,
-          error: null,
-          loading: Math.max(0, this.state.loading - 1)
+      // Process results
+      let nextState: Partial<IState>
+
+      if (requestNo >= this.state.request) {
+        if (res.ok) {
+          nextState = {
+            routes: res.data,
+            error: null,
+            loading: Math.max(0, this.state.loading - 1)
+          }
+
+        } else {
+          nextState = {
+            routes: [],
+            error: res.data.toString(),
+            loading: Math.max(0, this.state.loading - 1)
+          }
+
         }
 
       } else {
         nextState = {
-          routes: [],
-          error: res.data.toString(),
           loading: Math.max(0, this.state.loading - 1)
         }
 
       }
 
-    } else {
-      nextState = {
-        loading: Math.max(0, this.state.loading - 1)
-      }
+      this.setState({
+        ...this.state,
+        ...nextState
+      })
 
     }
 
-    this.setState({
-      ...this.state,
-      ...nextState
-    })
   }
 
   sort = (col: string) => {

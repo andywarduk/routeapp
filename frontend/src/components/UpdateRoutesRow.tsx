@@ -34,7 +34,7 @@ interface IState {
 // Class definition
 
 export default class UpdateRoutesRow extends Component<IProps, IState> {
-  static contextType = StravaContext
+  context!: React.ContextType<typeof StravaContext>
 
   stravaService: StravaService
   routeService: RouteService
@@ -53,10 +53,14 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
   }
 
   checkRoute = async () => {
-    const { route } = this.props
-    const { jwt } = this.context.auth
-
     try {
+      const { auth } = this.context
+
+      if (!auth) throw new Error('Not authorised')
+
+      const { jwt } = auth
+      const { route } = this.props
+
       // Set state to pending
       this.setState({
         status: Status.STATUS_PENDING,
@@ -96,12 +100,16 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
   }
 
   updateRoute = async () => {
-    const { jwt } = this.context.auth
-    const { stravaRoute } = this.state
-    const { route } = this.props
 
     try {
+      const { auth } = this.context
+      const { stravaRoute } = this.state
+
+      if (!auth) throw new Error('Not authorised')
       if (!stravaRoute) throw new Error('No strava route to update')
+
+      const { jwt } = auth
+      const { route } = this.props
 
       // Set state to updating
       this.setState({
@@ -248,10 +256,15 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
   }
 
   deleteRoute = async () => {
-    const { route, deleteNotify } = this.props
-    const { jwt } = this.context.auth
 
     try {
+      const { auth } = this.context
+
+      if (!auth) throw new Error('Not authorised')
+
+      const { route, deleteNotify } = this.props
+      const { jwt } = auth
+
       // Set state to deleting
       this.setState({
         status: Status.STATUS_DELETING,
@@ -285,43 +298,49 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
   }
 
   render = () => {
-    const { route, autoCheck } = this.props
-    const { status } = this.state
-    const { perms } = this.context.auth
+    const { auth } = this.context
 
-    const buttons = []
+    if (auth) {
+      const { route, autoCheck } = this.props
+      const { status } = this.state
+      const { perms } = auth
 
-    const permissions = new Permissions(perms)
+      const buttons = []
 
-    if (autoCheck && status === Status.STATUS_NEEDSCHECK) {
-      setTimeout(() => {
-        this.checkRoute()
-      }, 0)
+      const permissions = new Permissions(perms)
+
+      if (autoCheck && status === Status.STATUS_NEEDSCHECK) {
+        setTimeout(() => {
+          this.checkRoute()
+        }, 0)
+      }
+
+      if (permissions.check('modifyRoutes')) {
+        buttons.push(this.updateButton())
+      }
+
+      if (permissions.check('deleteRoutes')) {
+        buttons.push(this.deleteButton())
+      }
+
+      return (
+        <tr>
+          <td>
+            <a
+              href={`http://www.strava.com/routes/${route.routeid}`}
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              {route.routeid}
+            </a>
+          </td>
+          <td>{route.name}</td>
+          <td style={{whiteSpace: 'nowrap'}}>{buttons}</td>
+        </tr>
+      )
     }
 
-    if (permissions.check('modifyRoutes')) {
-      buttons.push(this.updateButton())
-    }
-
-    if (permissions.check('deleteRoutes')) {
-      buttons.push(this.deleteButton())
-    }
-
-    return (
-      <tr>
-        <td>
-          <a
-            href={`http://www.strava.com/routes/${route.routeid}`}
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            {route.routeid}
-          </a>
-        </td>
-        <td>{route.name}</td>
-        <td style={{whiteSpace: 'nowrap'}}>{buttons}</td>
-      </tr>
-    )
+    return <></>
   }
 
 }

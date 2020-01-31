@@ -38,12 +38,10 @@ interface IPolyLine {
   polyLine: null | LatLngTuple[]
 }
 
-type ArrayFixed<T, L extends number> = [ T, ...Array<T> ] & { length: L }
-
 // Class definition
 
 export default class RouteMap extends Component<IProps, IState> {
-  static contextType = StravaContext
+  context!: React.ContextType<typeof StravaContext>
 
   constructor(props: IProps) {
     super(props)

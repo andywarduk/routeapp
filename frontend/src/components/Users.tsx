@@ -23,7 +23,7 @@ interface IState {
 // Class definition
 
 export default class Users extends Component<IProps, IState> {
-  static contextType = StravaContext
+  context!: React.ContextType<typeof StravaContext>
 
   userService: UserService
 
@@ -45,40 +45,44 @@ export default class Users extends Component<IProps, IState> {
   }
 
   loadUsers = async (newState?: Partial<IState>) => {
-    const { jwt } = this.context.auth
+    const { auth } = this.context
 
-    let state: IState
+    if (auth) {
+      const { jwt } = auth
 
-    if (newState) {
-      state = {
-        ...this.state,
-        ...newState
+      let state: IState
+
+      if (newState) {
+        state = {
+          ...this.state,
+          ...newState
+        }
+
+        this.setState(state)
+      } else {
+        state = this.state
       }
 
-      this.setState(state)
-    } else {
-      state = this.state
-    }
+      const { sortCol, sortAsc } = state
 
-    const { sortCol, sortAsc } = state
-
-    const res = await this.userService.search(jwt, {
-      columns: ['athleteid', 'firstname', 'lastname', 'city', 'state', 'country'],
-      sort: {
-        column: sortCol,
-        ascending: sortAsc
-      },
-      perms: true
-    })
-
-    if (res.ok) {
-      this.setState({
-        users: res.data
+      const res = await this.userService.search(jwt, {
+        columns: ['athleteid', 'firstname', 'lastname', 'city', 'state', 'country'],
+        sort: {
+          column: sortCol,
+          ascending: sortAsc
+        },
+        perms: true
       })
-    } else {
-      this.setState({
-        error: res.data.toString()
-      })
+
+      if (res.ok) {
+        this.setState({
+          users: res.data
+        })
+      } else {
+        this.setState({
+          error: res.data.toString()
+        })
+      }
     }
   }
 

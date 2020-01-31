@@ -30,7 +30,7 @@ interface IUrlParams {
 // Class definition
 
 class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, IState> {
-  static contextType = StravaContext
+  context!: React.ContextType<typeof StravaContext>
 
   authService: AuthService
   userService: UserService
@@ -213,52 +213,60 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
   }
 
   loadUser = async (id: number) => {
-    const { jwt } = this.context.auth
+    const { auth } = this.context
 
-    this.setState({
-      userLoading: true
-    })
+    if (auth) {
+      const { jwt } = auth
 
-    const res = await this.userService.get(jwt, id)
-
-    if (res.ok) {
       this.setState({
-        userLoading: false,
-        user: res.data
+        userLoading: true
       })
 
-    } else {
-      this.setState({
-        userLoading: false,
-        user: null,
-        error: res.data.toString()
-      })
+      const res = await this.userService.get(jwt, id)
 
+      if (res.ok) {
+        this.setState({
+          userLoading: false,
+          user: res.data
+        })
+
+      } else {
+        this.setState({
+          userLoading: false,
+          user: null,
+          error: res.data.toString()
+        })
+
+      }
     }
   }
 
   loadPermKeys = async () => {
-    const { jwt } = this.context.auth
+    const { auth } = this.context
 
-    this.setState({
-      permKeysLoading: true
-    })
+    if (auth) {
+      const { jwt } = auth
 
-    const res = await this.authService.getPermKeys(jwt)
-
-    if (res.ok) {
       this.setState({
-        permKeysLoading: false,
-        permKeys: res.data
+        permKeysLoading: true
       })
 
-    } else {
-      this.setState({
-        permKeysLoading: false,
-        permKeys: null,
-        error: res.data.toString()
-      })
+      const res = await this.authService.getPermKeys(jwt)
 
+      if (res.ok) {
+        this.setState({
+          permKeysLoading: false,
+          permKeys: res.data
+        })
+
+      } else {
+        this.setState({
+          permKeysLoading: false,
+          permKeys: null,
+          error: res.data.toString()
+        })
+
+      }
     }
   }
 
@@ -287,23 +295,26 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
   save = async (evt: SyntheticEvent) => {
     evt.preventDefault()
 
-    const { user } = this.state
-    const { jwt } = this.context.auth
+    const { auth } = this.context
 
-    if (user) {
-      const { athleteid } = user
-      const perms = user.perms || {}
+    if (auth) {
+      const { jwt } = auth
+      const { user } = this.state
 
-      this.setState({
-        saving: true
-      })
+      if (user) {
+        const { athleteid, perms = {} } = user
 
-      await this.userService.setPerms(jwt, athleteid, perms)
+        this.setState({
+          saving: true
+        })
 
-      this.setState({
-        saving: false,
-        changed: false
-      })
+        await this.userService.setPerms(jwt, athleteid, perms)
+
+        this.setState({
+          saving: false,
+          changed: false
+        })
+      }
     }
   }
 

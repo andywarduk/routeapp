@@ -1,13 +1,15 @@
 import axios from 'axios'
 
 import { buildResponse, buildErrorResponse, ServiceResponse } from './Service'
-import { IPermissionKey } from './Permissions'
+import { IPermissionKey, IPermissionList } from './Permissions'
 
 // Types
 
 export interface IAuth {
-  // TODO
   jwt: string
+  picMed: string
+  fullName: string
+  perms: IPermissionList
 }
 
 // Class definition
