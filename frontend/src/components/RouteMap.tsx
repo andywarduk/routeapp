@@ -41,6 +41,7 @@ interface IPolyLine {
 // Class definition
 
 export default class RouteMap extends Component<IProps, IState> {
+  static contextType: typeof StravaContext = StravaContext
   context!: React.ContextType<typeof StravaContext>
 
   constructor(props: IProps) {

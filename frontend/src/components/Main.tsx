@@ -13,6 +13,7 @@ import Permissions from '../Permissions'
 // Class definition
 
 class Main extends Component<RouteComponentProps> {
+  static contextType: typeof StravaContext = StravaContext
   context!: React.ContextType<typeof StravaContext>
 
   render = () => {

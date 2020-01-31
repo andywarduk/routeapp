@@ -30,6 +30,7 @@ interface IUrlParams {
 // Class definition
 
 class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, IState> {
+  static contextType: typeof StravaContext = StravaContext
   context!: React.ContextType<typeof StravaContext>
 
   authService: AuthService

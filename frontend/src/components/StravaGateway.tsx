@@ -41,7 +41,7 @@ class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
   routeService: RouteService
   tokenPath = 'token'
 
-  stravaContext : IStravaContext = {
+  stravaContext: IStravaContext = {
     auth: null,
 
     getCachedPolyLine: async (routeId: number) => {

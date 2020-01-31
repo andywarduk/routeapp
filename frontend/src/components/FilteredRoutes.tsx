@@ -34,6 +34,7 @@ interface IState {
 // Class definition
 
 export default class FilteredRoutes extends Component<IProps, IState> {
+  static contextType: typeof StravaContext = StravaContext
   context!: React.ContextType<typeof StravaContext>
 
   static debounceTime = 400 // 0.4 second debounce

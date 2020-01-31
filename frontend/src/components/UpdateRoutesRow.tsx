@@ -34,6 +34,7 @@ interface IState {
 // Class definition
 
 export default class UpdateRoutesRow extends Component<IProps, IState> {
+  static contextType: typeof StravaContext = StravaContext
   context!: React.ContextType<typeof StravaContext>
 
   stravaService: StravaService
