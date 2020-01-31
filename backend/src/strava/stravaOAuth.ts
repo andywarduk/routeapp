@@ -1,9 +1,9 @@
-const axios = require('axios')
-const queryString = require('query-string')
+import axios from 'axios'
+import queryString from 'query-string'
 
-module.exports = {
+export default {
   
-  tokenExchange: async (clientId, token, clientSecret) => {
+  tokenExchange: async (clientId: string, token: string, clientSecret: string) => {
     // Do strava token exchange
 
     const body = {
@@ -22,7 +22,7 @@ module.exports = {
     return result.data
   },
 
-  refreshToken: async (clientId, clientSecret, refreshToken) => {
+  refreshToken: async (clientId: string, clientSecret: string, refreshToken: string) => {
     // Do strava token refresh
 
     const body = {

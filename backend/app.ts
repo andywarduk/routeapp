@@ -1,11 +1,16 @@
-// Libraries
-const express = require('express')
-const mongoose = require('mongoose')
-const bodyParser = require('body-parser')
-const cors = require('cors')
-const dotenv = require('dotenv')
+import express from 'express'
+import mongoose from 'mongoose'
+import bodyParser from 'body-parser'
+import cors from 'cors'
+import dotenv from 'dotenv'
 
-const setupJwtAuth = require('./src/auth/jwtAuth')
+import setupJwtAuth from './src/auth/jwtAuth'
+
+  // Routes and backend functions
+import routesRoutes from './src/routes/routesRoutes'
+import authRoutes from './src/auth/authRoutes'
+import stravaRoutes from './src/strava/stravaRoutes'
+import usersRoutes from './src/users/usersRoutes'
 
 main()
 
@@ -62,12 +67,6 @@ async function main()
   // Set up jwt auth
   setupJwtAuth()
 
-  // Routes and backend functions
-  const routesRoutes = require('./src/routes/routesRoutes')
-  const authRoutes = require('./src/auth/authRoutes')
-  const stravaRoutes = require('./src/strava/stravaRoutes')
-  const usersRoutes = require('./src/users/usersRoutes')
-
   // App Instance
   const app = express()
   app.use(express.static('public'))
@@ -87,19 +86,10 @@ async function main()
   })
 }
 
-function delay(ms){
-  let ctr
-  let rej
-
-  const p = new Promise(function (resolve, reject) {
-      ctr = setTimeout(resolve, ms);
-      rej = reject;
+function delay(ms: number){
+  const p = new Promise(function (resolve) {
+      setTimeout(resolve, ms)
   })
-
-  p.cancel = function() {
-    clearTimeout(ctr)
-    rej(Error("Cancelled"))
-  }
 
   return p
 }

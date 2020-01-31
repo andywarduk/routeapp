@@ -1,16 +1,15 @@
-const express = require('express')
-const passport = require('passport')
+import express from 'express'
+import passport from 'passport'
 
-const response = require('../response')
-const permissions = require('../auth/permissions')
-const { permsEnum } = permissions
+import response from '../response'
+import { checkPermission } from '../auth/permissions'
 
 const router = express.Router()
 
 // Routes schema
-const Routes = require('../models/routes')
+import Routes from '../models/routes'
 
-const regExEscape = (text) => {
+const regExEscape = (text: string) => {
   const specials = [
     '/', '.', '*', '+', '?', '|',
     '(', ')', '[', ']', '{', '}', '\\'
@@ -23,7 +22,7 @@ const regExEscape = (text) => {
   return text.replace(sRE, '\\$1');
 }
 
-const buildPartialTextFilter = (filter, text) => {
+const buildPartialTextFilter = (filter: any, text: string) => {
   const words = text.split(" ").map(regExEscape).filter((x) => x !== '')
 
   const andClause = []
@@ -47,13 +46,14 @@ const buildPartialTextFilter = (filter, text) => {
 // Search routes
 router.route('/routes').post(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
+  checkPermission('viewRoutes'),
   async function (req, res) {
     try {
       const searchOptions = req.body
 
-      const filter = {}
-      let options = null
+      // These are not typed by mongoose
+      const filter: any = {}
+      let options: any = null
 
       // Filter
       if (searchOptions.filter) {
@@ -142,7 +142,7 @@ router.route('/routes').post(
 
 // Get route list
 router.route('/routes/list').get(
-  async function (req, res) {
+  async function (_req, res) {
     try {
       // Do search
       const list = await Routes.find({}, {
@@ -165,7 +165,7 @@ router.route('/routes/list').get(
 // Get specific route
 router.route('/routes/:id').get(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
+  checkPermission('viewRoutes'),
   async function (req, res) {
     try {
       const id = req.params.id;
@@ -174,7 +174,11 @@ router.route('/routes/:id').get(
         routeid: id
       }).exec()
 
-      res.json(doc)
+      if (doc) {
+        res.json(doc)
+      } else {
+        response.errorMsgResponse(res, 404, 'Route not found')
+      }
 
     } catch (err) {
       response.errorResponse(res, err)
@@ -186,7 +190,7 @@ router.route('/routes/:id').get(
 // Get route polyline
 router.route('/routes/:id/polyLine').get(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
+  checkPermission('viewRoutes'),
   async function (req, res) {
     try {
       const id = req.params.id;
@@ -197,7 +201,11 @@ router.route('/routes/:id/polyLine').get(
         'map.polyline': 1
       }).exec()
 
-      res.json(doc.map.polyline)
+      if (doc) {
+        res.json(doc.map.polyline)
+      } else {
+        response.errorMsgResponse(res, 404, 'Route not found')
+      }
 
     } catch (err) {
       response.errorResponse(res, err)
@@ -209,7 +217,7 @@ router.route('/routes/:id/polyLine').get(
 // Get route summary polyline
 router.route('/routes/:id/summaryPolyLine').get(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_VIEWROUTES),
+  checkPermission('viewRoutes'),
   async function (req, res) {
     try {
       const id = req.params.id;
@@ -220,7 +228,11 @@ router.route('/routes/:id/summaryPolyLine').get(
         'map.summary_polyline': 1
       }).exec()
 
-      res.json(doc.map.summary_polyline)
+      if (doc) {
+        res.json(doc.map.summary_polyline)
+      } else {
+        response.errorMsgResponse(res, 404, 'Route not found')
+      }
 
     } catch (err) {
       response.errorResponse(res, err)
@@ -232,7 +244,7 @@ router.route('/routes/:id/summaryPolyLine').get(
 // Add or update route
 router.route('/routes/:id').post(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_MODIFYROUTES),
+  checkPermission('modifyRoutes'),
   async function (req, res) {
     const id = req.params.id
 
@@ -261,7 +273,7 @@ router.route('/routes/:id').post(
 // Replace route
 router.route('/routes/:id').put(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_MODIFYROUTES),
+  checkPermission('modifyRoutes'),
   async function (req, res) {
     const id = req.params.id
 
@@ -289,7 +301,7 @@ router.route('/routes/:id').put(
 // Delete route
 router.route('/routes/:id').delete(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_DELETEROUTES),
+  checkPermission('deleteRoutes'),
   async function (req, res) {
     const id = req.params.id
 
@@ -307,4 +319,4 @@ router.route('/routes/:id').delete(
   }
 )
 
-module.exports = router
+export default router

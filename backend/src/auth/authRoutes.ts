@@ -1,17 +1,16 @@
-const express = require('express')
-const passport = require('passport')
-const jwt = require('jsonwebtoken');
+import express from 'express';
+import passport from 'passport';
+import jwt from 'jsonwebtoken';
 
-const response = require('../response')
-const permissions = require('../auth/permissions')
-const { permsEnum } = permissions
-const stravaOAuth = require('../strava/stravaOAuth')
+import response from '../response';
+import { checkPermission, permsDesc } from '../auth/permissions';
+import stravaOAuth from '../strava/stravaOAuth';
 
 // User schemas
-const StravaUsers = require('../models/stravaUsers')
-const Users = require('../models/users')
-const UserPerms = require('../models/userPerms')
-const UserAuths = require('../models/userAuths')
+import StravaUsers from '../models/stravaUsers';
+import Users from '../models/users';
+import UserPerms, { IPermsKeys } from '../models/userPerms';
+import UserAuths from '../models/userAuths';
 
 // Create router
 const router = express.Router()
@@ -20,7 +19,7 @@ const router = express.Router()
 router.route('/auth').post(async function (req, res) {
   try {
     // Do strava authentication
-    const data = await stravaOAuth.tokenExchange(req.body.clientId, req.body.token, process.env.STRAVA_CLIENT_SECRET)
+    const data = await stravaOAuth.tokenExchange(req.body.clientId, req.body.token, process.env.STRAVA_CLIENT_SECRET || '')
 
     // Set up strava user document
     let stravaUser = data.athlete
@@ -57,12 +56,12 @@ router.route('/auth').post(async function (req, res) {
       })
 
       // Make app owner an admin, all others get viewRoutes by default
-      const superAthlete = parseInt(process.env.SUPER_ATHLETE)
+      const superAthlete = parseInt(process.env.SUPER_ATHLETE || '')
 
       if (!!superAthlete && stravaUser.id === superAthlete) {
-        user.perms[permsEnum.PERM_ADMIN] = true
+        user.perms.admin = true
       } else {
-        user.perms[permsEnum.PERM_VIEWROUTES] = true
+        user.perms.viewRoutes = true
       }
 
       await user.perms.save()
@@ -98,7 +97,7 @@ router.route('/auth').post(async function (req, res) {
       athleteId: stravaUser.id
     }
 
-    const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, {
+    const token = jwt.sign(jwtPayload, process.env.JWT_SECRET || '', {
       issuer: 'corsham.cc'
     })
 
@@ -121,15 +120,15 @@ router.route('/auth').post(async function (req, res) {
 // Get available permissions
 router.route('/auth/permkeys').get(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_ADMIN),
-  async function (req, res) {
+  checkPermission('admin'),
+  async function (_req, res) {
     try {
       const permKeys = []
 
-      for (const k of Object.keys(permissions.permsEnum)) {
+      for (const k of IPermsKeys) {
         permKeys.push({
-          id: permissions.permsEnum[k],
-          desc: permissions.permsDesc[k]
+          id: k,
+          desc: permsDesc[k]
         })
       }
 
@@ -142,4 +141,4 @@ router.route('/auth/permkeys').get(
   }
 )
 
-module.exports = router
+export default router

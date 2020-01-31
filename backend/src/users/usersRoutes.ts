@@ -1,20 +1,20 @@
-const express = require('express')
-const passport = require('passport')
+import express from 'express'
+import passport from 'passport'
 
-const response = require('../response')
-const permissions = require('../auth/permissions')
-const { permsEnum } = permissions
+import response from '../response'
+import { checkPermission } from '../auth/permissions'
 
 const router = express.Router()
 
 // Users schema
-const Users = require('../models/users')
-const UserPerms = require('../models/userPerms')
+import Users, { IUserModel } from '../models/users'
+import UserPerms from '../models/userPerms'
+import { IStravaUserModel } from '../models/stravaUsers'
 
 // Get users
 router.route('/users').post(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_ADMIN),
+  checkPermission('admin'),
   async function (req, res) {
     try {
       const searchOptions = req.body
@@ -34,22 +34,23 @@ router.route('/users').post(
       }
 
       // Do search
-      let users = Users.find({}, projection)
+      let usersQuery = Users.find({}, projection)
         .populate('stravaUser')
 
       if (searchOptions.perms === true) {
-        users = users.populate('perms')
+        usersQuery = usersQuery.populate('perms')
       }
 
-      users = await users.exec()
+      const users = await usersQuery.exec()
 
       // Sort
       if (searchOptions.sort) {
         const col = searchOptions.sort.column
         const order = searchOptions.sort.ascending ? 1 : -1
 
-        const compareCol = (a, b, cols) => {
-          const thisCol = cols[cols.length - 1]
+        const compareCol = (a: IUserModel, b: IUserModel, cols: (keyof IStravaUserModel)[]): number => {
+          const thisCol: keyof IStravaUserModel = cols[cols.length - 1]
+
           if (a.stravaUser[thisCol] === b.stravaUser[thisCol]) {
             switch (thisCol) {
             case 'lastname':
@@ -69,7 +70,7 @@ router.route('/users').post(
             return compareCol(a, b, ['id'])
           }
 
-          return (a.stravaUser[col] < b.stravaUser[col] ? -1 : 1) * order
+          return (a.stravaUser[thisCol] < b.stravaUser[thisCol] ? -1 : 1) * order
         }
 
         users.sort((a, b) => compareCol(a, b, [col]))
@@ -88,7 +89,7 @@ router.route('/users').post(
 // Get specific user
 router.route('/users/:id').get(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_ADMIN),
+  checkPermission('admin'),
   async function (req, res) {
     try {
       const id = req.params.id;
@@ -112,7 +113,7 @@ router.route('/users/:id').get(
 // Set user permissions
 router.route('/users/:id/perms').put(
   passport.authenticate('jwt', { session: false }),
-  permissions.checkPermission(permsEnum.PERM_ADMIN),
+  checkPermission('admin'),
   async function (req, res) {
     try {
       const id = req.params.id;
@@ -122,19 +123,24 @@ router.route('/users/:id/perms').put(
         athleteid: id
       }).exec()
 
-      // Update permissions
-      const perms = {
-        user: user._id,
-        ...req.body
+      if (!user) {
+        response.errorMsgResponse(res, 404, 'User not found')
+
+      } else {
+        // Update permissions
+        const perms = {
+          user: user._id,
+          ...req.body
+        }
+
+        await UserPerms.findByIdAndUpdate(user.perms, perms, {
+          upsert: true,
+          overwrite: true,
+          new: true
+        }).exec()
+
+        response.msgResponse(res, `Replaced permissions for athlete ${id}`)
       }
-
-      await UserPerms.findByIdAndUpdate(user.perms, perms, {
-        upsert: true,
-        overwrite: true,
-        new: true
-      }).exec()
-
-      response.msgResponse(res, `Replaced permissions for athlete ${id}`)
 
     } catch (err) {
       response.errorResponse(res, err)
@@ -143,4 +149,4 @@ router.route('/users/:id/perms').put(
   }
 )
 
-module.exports = router
+export default router

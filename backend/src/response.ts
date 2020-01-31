@@ -1,13 +1,22 @@
-module.exports = {
+import { Response } from "express"
 
-  msgResponse: (res, message) => {
+export default {
+
+  msgResponse: (res: Response, message: string) => {
     res.json({
       ok: true,
       message
     })
   },
 
-  errorResponse: (res, err) => {
+  errorMsgResponse: (res: Response, code: number, message: string) => {
+    res.status(code).json({
+      ok: false,
+      message
+    })
+  },
+
+  errorResponse: (res: Response, err: Error | any) => {
     let code = 500
 
     if (process.env.NODE_ENV != 'production') {
