@@ -5,6 +5,8 @@ WORKDIR /usr/src/app
 
 EXPOSE 3000
 
+ENV TSC_WATCHFILE UseFsEventsWithFallbackDynamicPolling
+ENV TSC_WATCHDIRECTORY RecursiveDirectoryUsingDynamicPriorityPolling
 ENV NODE_ENV development
 
 CMD [ "npm", "start" ]
