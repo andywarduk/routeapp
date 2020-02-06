@@ -1,5 +1,5 @@
 import React, { Component, CSSProperties } from 'react'
-import { Map, TileLayer, Polyline, Popup, MapProps } from 'react-leaflet'
+import { Map, TileLayer, Polyline, Popup, MapProps, LayersControl } from 'react-leaflet'
 import { LatLngBounds, LatLngTuple } from 'leaflet'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
@@ -276,10 +276,37 @@ export default class RouteMap extends Component<IProps, IState> {
       <div>
         {loadingMsg}
         <Map style={{'height': '100vw', 'maxHeight': '100vh'}} {...mapProps}>
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-          />
+          <LayersControl position="topright">
+
+            <LayersControl.BaseLayer name="OpenStreetMap" checked={true}>
+              <TileLayer
+                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            </LayersControl.BaseLayer>
+
+            <LayersControl.BaseLayer name="OpenStreetMap B&amp;W">
+              <TileLayer
+                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                url="https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"
+              />
+            </LayersControl.BaseLayer>
+
+            <LayersControl.BaseLayer name="WikiMedia">
+              <TileLayer
+                attribution='<a href="https://wikimediafoundation.org/wiki/Maps_Terms_of_Use">Wikimedia</a>'
+                url='https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png'
+              />
+            </LayersControl.BaseLayer>
+  
+            <LayersControl.Overlay name="Relief shading">
+              <TileLayer
+                attribution='Imagery from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a> | Map data  <a href="https://lpdaac.usgs.gov/products/aster_policies">ASTER GDEM</a>, <a href="http://srtm.csi.cgiar.org/">SRTM</a>'
+                url="https://maps.heigit.org/openmapsurfer/tiles/asterh/webmercator/{z}/{x}/{y}.png"
+              />
+            </LayersControl.Overlay>
+
+          </LayersControl>
           {mapPolyLines}
         </Map>
       </div>
