@@ -95,7 +95,7 @@ router.route('/users/:id').get(
       const id = req.params.id;
 
       const doc = await Users.findOne({
-        athleteid: id
+        athleteid: parseInt(id)
       })
         .populate('stravaUser')
         .populate('perms')
@@ -120,7 +120,7 @@ router.route('/users/:id/perms').put(
 
       // Load user
       const user = await Users.findOne({
-        athleteid: id
+        athleteid: parseInt(id)
       }).exec()
 
       if (!user) {

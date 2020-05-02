@@ -171,7 +171,7 @@ router.route('/routes/:id').get(
       const id = req.params.id;
 
       const doc = await Routes.findOne({
-        routeid: id
+        routeid: parseInt(id)
       }).exec()
 
       if (doc) {
@@ -196,7 +196,7 @@ router.route('/routes/:id/polyLine').get(
       const id = req.params.id;
 
       const doc = await Routes.findOne({
-        routeid: id
+        routeid: parseInt(id)
       }, {
         'map.polyline': 1
       }).exec()
@@ -223,7 +223,7 @@ router.route('/routes/:id/summaryPolyLine').get(
       const id = req.params.id;
 
       const doc = await Routes.findOne({
-        routeid: id
+        routeid: parseInt(id)
       }, {
         'map.summary_polyline': 1
       }).exec()
@@ -255,7 +255,7 @@ router.route('/routes/:id').post(
 
     try {
       await Routes.findOneAndUpdate({
-        routeid: id
+        routeid: parseInt(id)
       }, doc, {
         upsert: true,
         overwrite: true
@@ -284,7 +284,7 @@ router.route('/routes/:id').put(
 
     try {
       await Routes.findOneAndUpdate({
-        routeid: id
+        routeid: parseInt(id)
       }, doc, {
         overwrite: true
       }).exec()
@@ -307,7 +307,7 @@ router.route('/routes/:id').delete(
 
     try {
       await Routes.findOneAndRemove({
-        routeid: id
+        routeid: parseInt(id)
       }).exec()
 
       response.msgResponse(res, `Deleted route ${id}`)
