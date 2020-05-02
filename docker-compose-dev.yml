@@ -18,7 +18,7 @@ services:
     ports:
       - "6200:6200"
     volumes:
-      - ./backend:/usr/src/app
+      - ./backend:/app
     depends_on:
       - mongodb-dev
 
@@ -29,7 +29,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/usr/src/app
+      - ./frontend:/app
     depends_on:
       - backend-dev
 
