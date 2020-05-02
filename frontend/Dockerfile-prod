@@ -1,10 +1,17 @@
 # Build environment
-FROM node:latest as build
+FROM node:latest as buildenv
 
 WORKDIR /app
 
-COPY package.json .
-RUN npm install --silent
+COPY package.json package-lock.json ./
+
+RUN npm install
+
+
+# Build
+FROM buildenv as build
+
+WORKDIR /app
 
 COPY . .
 

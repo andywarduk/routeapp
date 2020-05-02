@@ -1,18 +1,40 @@
 # Build environment
-FROM node:latest as build
+FROM node:latest as buildenv
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-COPY package.json .
+COPY package.json package-lock.json ./
+
 RUN npm install
-RUN npm run build
 
-# Production environment
-FROM build
 
-WORKDIR /usr/src/app
+# Build
+FROM buildenv as build
+
+WORKDIR /app
 
 COPY . .
+
+RUN npm run build
+
+
+# Production environment
+FROM node:latest as prodenv
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci --only=production
+
+
+# Production
+FROM prodenv
+
+WORKDIR /app
+
+COPY --from=build /app/build ./build
+COPY --from=build /app/.env ./
 
 EXPOSE 6200
 
