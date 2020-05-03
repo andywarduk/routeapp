@@ -24,7 +24,13 @@ export default class Distance extends Component<IProps> {
 
     const dist = convertLength(metres, 'm', unit)
 
-    const distString = dist.toFixed(dp)
+    let distString
+    if (dp < 0) {
+      const factor = Math.pow(10, -dp)
+      distString = (Math.round(dist / factor) * factor).toFixed(0)
+    } else {
+      distString = dist.toFixed(dp)
+    }
 
     if (this.props.showUnit || this.props.showUnit === undefined) {
       return (
