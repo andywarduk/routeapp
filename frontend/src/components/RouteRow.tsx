@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import { Component } from 'react'
 import Distance from './Distance'
 import TimeSpan from './TimeSpan'
 import StravaRouteLink from './StravaRouteLink'

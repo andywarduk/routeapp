@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import { Component } from 'react'
 import { Link, LinkProps } from 'react-router-dom'
 
 // Class definition

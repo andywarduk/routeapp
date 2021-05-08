@@ -1,5 +1,5 @@
-import React, { Component, CSSProperties } from 'react'
-import { Map, TileLayer, Polyline, Popup, MapProps, LayersControl } from 'react-leaflet'
+import { Component, CSSProperties } from 'react'
+import { Map, MapProps, TileLayer, Polyline, Popup, LayersControl } from 'react-leaflet'
 import { LatLngBounds, LatLngTuple } from 'leaflet'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
@@ -22,6 +22,7 @@ interface MinMax {
   maxLon: number
   minDist: number
   maxDist: number
+  count: number
 }
 
 interface IState extends MinMax {
@@ -94,12 +95,15 @@ export default class RouteMap extends Component<IProps, IState> {
   defaultMinMax = (mapCentre: LatLngTuple): MinMax => {
     const minMax = {
       minLat: mapCentre[0],
-      maxLat: mapCentre[0],
-      minLon: mapCentre[1],
       maxLon: mapCentre[1],
 
+      maxLat: mapCentre[0],
+      minLon: mapCentre[1],
+
       minDist: 0,
-      maxDist: 0
+      maxDist: 0,
+
+      count: 0
     }
 
     return minMax
@@ -138,7 +142,7 @@ export default class RouteMap extends Component<IProps, IState> {
     })
 
     // Create new polylines array
-    let polyLines = routes.map((r): IPolyLine => {
+    const polyLines = routes.map((r): IPolyLine => {
       return {
         routeid: r.routeid,
         distance: r.distance,
@@ -165,26 +169,31 @@ export default class RouteMap extends Component<IProps, IState> {
       }
     }
 
-    const minMax: MinMax = this.defaultMinMax(mapCentre)
+    let minMax: MinMax = this.defaultMinMax(mapCentre)
 
     // Calculate bounding box
-    polyLines.reduce((minMax, pl) => {
+    for (const pl of polyLines) {
       if (pl.polyLine && Array.isArray(pl.polyLine)) {
-        minMax = pl.polyLine.reduce((newState, p) => {
-          if (p[0] < minMax.minLat) newState.minLat = p[0]
-          if (p[0] > minMax.maxLat) newState.maxLat = p[0]
-          if (p[1] < minMax.minLon) newState.minLon = p[1]
-          if (p[1] > minMax.maxLon) newState.maxLon = p[1]  
+        for (const p of pl.polyLine) {
+          if (minMax.count === 0) {
+            minMax.minLat = p[0]
+            minMax.maxLat = p[0]
+            minMax.minLon = p[1]
+            minMax.maxLon = p[1]
+          } else {
+            if (p[0] < minMax.minLat) minMax.minLat = p[0]
+            if (p[0] > minMax.maxLat) minMax.maxLat = p[0]
+            if (p[1] < minMax.minLon) minMax.minLon = p[1]
+            if (p[1] > minMax.maxLon) minMax.maxLon = p[1]
+          }
 
-          return minMax
-        }, minMax)
-
-        if (minMax.minDist === 0 || pl.distance < minMax.minDist) minMax.minDist = pl.distance
-        if (pl.distance > minMax.maxDist) minMax.maxDist = pl.distance
+          minMax.count++
+        }
       }
 
-      return minMax
-    }, minMax)
+      if (minMax.minDist === 0 || pl.distance < minMax.minDist) minMax.minDist = pl.distance
+      if (pl.distance > minMax.maxDist) minMax.maxDist = pl.distance
+    }
 
     // Set the new state
     this.setState({
@@ -198,8 +207,6 @@ export default class RouteMap extends Component<IProps, IState> {
   render = () => {
     const { polyLines, loading, maxDist, minDist } = this.state
 
-    let mapPolyLines
-
     const mapProps: Partial<MapProps> = {
       scrollWheelZoom: false
     }
@@ -208,7 +215,7 @@ export default class RouteMap extends Component<IProps, IState> {
 
     const distRange = maxDist - minDist
 
-    mapPolyLines = polyLines.reduce((arr: JSX.Element[], p, i) => {
+    const mapPolyLines = polyLines.reduce((arr: JSX.Element[], p, i) => {
       if (p.polyLine) {
         const distRatio = (distRange === 0 ? 1 : ((p.distance - minDist) / distRange)) * 512
 
@@ -298,11 +305,18 @@ export default class RouteMap extends Component<IProps, IState> {
                 url='https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png'
               />
             </LayersControl.BaseLayer>
-  
+
+            <LayersControl.BaseLayer name="Satellite">
+              <TileLayer
+                attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+              />
+            </LayersControl.BaseLayer>
+    
             <LayersControl.Overlay name="Relief shading">
               <TileLayer
-                attribution='Imagery from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a> | Map data  <a href="https://lpdaac.usgs.gov/products/aster_policies">ASTER GDEM</a>, <a href="http://srtm.csi.cgiar.org/">SRTM</a>'
-                url="https://maps.heigit.org/openmapsurfer/tiles/asterh/webmercator/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors"></a>'
+                url="https://tiles.wmflabs.org/hillshading/{z}/{x}/{y}.png"
               />
             </LayersControl.Overlay>
 

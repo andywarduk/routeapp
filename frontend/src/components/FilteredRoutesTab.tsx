@@ -1,4 +1,4 @@
-import React, { Component, SyntheticEvent, ReactElement } from 'react'
+import { Component, SyntheticEvent, ReactElement } from 'react'
 
 import { FilteredRoutesView } from './FilteredRoutes'
 import { IRoute } from '../RouteService'
@@ -41,7 +41,7 @@ export default class FilteredRoutesTab extends Component<IProps, IState> {
 
     tabItems.push(
       <li key={type} className='nav-item'>
-        <a className={classes} href='/' onClick={(evt) => this.switchTab(evt, type)}>{desc}</a>
+        <a className={classes} href='/' onClick={(evt) => this.switchTab(evt, type)} tabIndex={0}>{desc}</a>
       </li>
     )
   }
@@ -82,9 +82,10 @@ export default class FilteredRoutesTab extends Component<IProps, IState> {
 
     tabItems.push(
       <li key={-1} className='nav-item ml-auto'>
-        <a className='nav-link disabled' href='/'>
-        {spinnerSpan}<span>{count}</span>
-        </a>
+        <span className='nav-link disabled'>
+          {spinnerSpan}
+          <span>{count}</span>
+        </span>
       </li>
     )
 

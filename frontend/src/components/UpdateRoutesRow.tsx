@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import { Component } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheckCircle, faSyncAlt, faSave, faExclamationTriangle, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons'
 

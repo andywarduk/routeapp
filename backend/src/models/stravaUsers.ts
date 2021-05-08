@@ -41,7 +41,7 @@ const StravaUser = new Schema({
 })
 
 StravaUser.set('toJSON', {
-  transform: (_doc, ret) => {
+  transform: (_doc: any, ret: any) => {
     delete ret._id
     delete ret.__v
   }

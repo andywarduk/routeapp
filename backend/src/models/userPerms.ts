@@ -30,7 +30,7 @@ for (const k of IPermsKeys) {
 }
 
 UserPerms.set('toJSON', {
-  transform: (_doc, ret) => {
+  transform: (_doc: any, ret: any) => {
     // Only return keys in IPerms
     for (const k of Object.keys(ret)) {
       if (IPermsKeys.indexOf(k as keyof IPerms) < 0) delete ret[k]

@@ -1,4 +1,4 @@
-import React, { Component, SyntheticEvent } from 'react'
+import { Component, SyntheticEvent } from 'react'
 
 import convertLength from '../LengthConv'
 import { IRouteSearchFilter } from '../RouteService'

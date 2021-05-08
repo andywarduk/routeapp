@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import { Component } from 'react'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
 
 import { IUser } from '../UserService'

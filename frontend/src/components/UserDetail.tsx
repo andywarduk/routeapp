@@ -139,7 +139,7 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
     }
 
     // Convert dates
-    const dateOptions = {
+    const dateOptions: Intl.DateTimeFormatOptions = {
       weekday: 'short',
       year: 'numeric',
       month: 'short',

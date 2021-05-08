@@ -1,4 +1,4 @@
-import React, { Component, ComponentType } from 'react'
+import { Component, ComponentType } from 'react'
 import { withRouter, Redirect, RouteComponentProps } from 'react-router-dom'
 import { LatLngTuple } from 'leaflet'
 import queryString from 'query-string'

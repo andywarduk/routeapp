@@ -1,4 +1,4 @@
-import React, { Component, ComponentType, ReactNode } from 'react'
+import { Component, ComponentType, ReactNode } from 'react'
 import { Switch, Route, withRouter, RouteComponentProps } from 'react-router-dom'
 
 import FilteredRoutes from './FilteredRoutes'

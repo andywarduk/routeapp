@@ -24,7 +24,7 @@ const UserAuths = new Schema({
 })
 
 UserAuths.set('toJSON', {
-  transform: (_doc, ret) => {
+  transform: (_doc: any, ret: any) => {
     delete ret._id
     delete ret.__v
 
