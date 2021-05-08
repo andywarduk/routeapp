@@ -10,6 +10,8 @@ services:
     volumes:
       - data-db-dev:/data/db
       - data-configdb-dev:/data/configdb
+    networks:
+      - dev_default
  
   backend-dev:
     build: 
@@ -19,9 +21,13 @@ services:
       - "6200:6200"
     volumes:
       - ./backend:/app
+      - /app/node_modules
+      - /app/build
     depends_on:
       - mongodb-dev
-
+    networks:
+      - dev_default
+  
   frontend-dev:
     build: 
       context: ./frontend/
@@ -30,9 +36,15 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend-dev
-
+    networks:
+      - dev_default
+  
 volumes:
   data-db-dev:
   data-configdb-dev:
+
+networks:
+  dev_default:
