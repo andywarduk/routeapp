@@ -3,7 +3,7 @@ FROM node:latest as buildenv
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json ./
 
 RUN npm install
 
@@ -23,7 +23,7 @@ FROM node:latest as prodenv
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json ./
 
 RUN npm ci --only=production
 
