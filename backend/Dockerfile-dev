@@ -8,4 +8,8 @@ ENV TSC_WATCHFILE UseFsEventsWithFallbackDynamicPolling
 ENV TSC_WATCHDIRECTORY RecursiveDirectoryUsingDynamicPriorityPolling
 ENV NODE_ENV development
 
+COPY package.json .
+
+RUN npm install
+
 CMD [ "npm", "run", "watch" ]
