@@ -1,5 +1,5 @@
 https - done. Let's Encrypt via certbot, terminated in the frontend container.
-See the HTTPS section of README.txt for the one-time issuance step; renewal is
+See the HTTPS section of README.md for the one-time issuance step; renewal is
 automatic. Still needs a real domain - nothing here can conjure one up.
 
 Health checks - done. /api/health on the backend, plus healthcheck stanzas and
