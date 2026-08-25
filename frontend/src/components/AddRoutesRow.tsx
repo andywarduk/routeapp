@@ -5,6 +5,7 @@ import { faSyncAlt, faExclamationTriangle, faCheck } from '@fortawesome/free-sol
 import StravaContext from './StravaContext'
 import StravaService, { IStravaRoute } from '../StravaService'
 import RouteService, { IRoute } from '../RouteService'
+import { toError } from '../Service'
 
 // Types
 
@@ -81,7 +82,7 @@ export default class AddRoutesRow extends Component<IProps, IState> {
     } catch(err) {
       this.setState({
         status: EStatus.STATUS_ERRORED,
-        desc: err.toString()
+        desc: toError(err).toString()
       })
       finishNotify(route.routeid)
 
@@ -120,7 +121,7 @@ export default class AddRoutesRow extends Component<IProps, IState> {
     } catch(err) {
       this.setState({
         status: EStatus.STATUS_ERRORED,
-        desc: err.toString()
+        desc: toError(err).toString()
       })
       finishNotify(route.routeid)
 

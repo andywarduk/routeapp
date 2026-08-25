@@ -134,7 +134,7 @@ class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
   finishAuth = async () => {
     try {
       // Finish authentication on the back end
-      const res = await this.authService.auth(process.env.REACT_APP_STRAVA_CLIENT_ID || '', this.state.token || '')
+      const res = await this.authService.auth(import.meta.env.VITE_STRAVA_CLIENT_ID || '', this.state.token || '')
 
       if (res.ok) {
         this.stravaContext.auth = res.data
@@ -185,7 +185,7 @@ class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
           const returnPath = `${window.location.origin}${matchPath}/${this.tokenPath}${subPath}`
 
           const search = {
-            client_id: process.env.REACT_APP_STRAVA_CLIENT_ID,
+            client_id: import.meta.env.VITE_STRAVA_CLIENT_ID,
             response_type: 'code',
             redirect_uri: returnPath,
             approval_prompt: 'auto',

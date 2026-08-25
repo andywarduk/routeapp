@@ -1,8 +1,6 @@
-version: '2'
-
 services:
   mongodb-dev:
-    image: "mongo"
+    image: "mongo:5.0"
     ports:
       - "27017:27017"
     env_file:
@@ -12,9 +10,9 @@ services:
       - data-configdb-dev:/data/configdb
     networks:
       - dev_default
- 
+
   backend-dev:
-    build: 
+    build:
       context: ./backend/
       dockerfile: Dockerfile-dev
     ports:
@@ -27,9 +25,9 @@ services:
       - mongodb-dev
     networks:
       - dev_default
-  
+
   frontend-dev:
-    build: 
+    build:
       context: ./frontend/
       dockerfile: Dockerfile-dev
     ports:
@@ -41,7 +39,7 @@ services:
       - backend-dev
     networks:
       - dev_default
-  
+
 volumes:
   data-db-dev:
   data-configdb-dev:

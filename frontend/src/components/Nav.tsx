@@ -9,8 +9,8 @@ export default class Nav extends Component<{}> {
 
     let devMsg
 
-    if (process.env.NODE_ENV !== 'production') {
-      devMsg = ` (${process.env.NODE_ENV})`
+    if (import.meta.env.DEV) {
+      devMsg = ` (${import.meta.env.MODE})`
     }
 
     return (

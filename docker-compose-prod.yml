@@ -1,8 +1,6 @@
-version: '2'
-
 services:
   mongodb-prod:
-    image: "mongo"
+    image: "mongo:5.0"
     restart: always
     expose:
       - "27017"
@@ -11,9 +9,9 @@ services:
     volumes:
       - data-db-prod:/data/db
       - data-configdb-prod:/data/configdb
- 
+
   backend-prod:
-    build: 
+    build:
       context: ./backend/
       dockerfile: Dockerfile-prod
     restart: always
@@ -23,7 +21,7 @@ services:
       - mongodb-prod
 
   frontend-prod:
-    build: 
+    build:
       context: ./frontend/
       dockerfile: Dockerfile-prod
     restart: always

@@ -48,7 +48,7 @@ export default class RouteMap extends Component<IProps, IState> {
   constructor(props: IProps) {
     super(props)
 
-    const mapCentreEnv = (process.env.REACT_APP_MAP_CENTRE || '').split(',').map(parseFloat)
+    const mapCentreEnv = (import.meta.env.VITE_MAP_CENTRE || '').split(',').map(parseFloat)
 
     let mapCentre: LatLngTuple
 

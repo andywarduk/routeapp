@@ -5,6 +5,7 @@ import { faCheckCircle, faSyncAlt, faSave, faExclamationTriangle, faCheck, faTra
 import StravaContext from './StravaContext'
 import StravaService, { IStravaRoute } from '../StravaService'
 import RouteService, { IRoute } from '../RouteService'
+import { toError } from '../Service'
 import Permissions from '../Permissions'
 
 // Types
@@ -93,7 +94,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
     } catch(err) {
       this.setState({
         status: Status.STATUS_ERRORED,
-        error: err.toString()
+        error: toError(err).toString()
       })
 
     }
@@ -135,7 +136,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
     } catch(err) {
       this.setState({
         status: Status.STATUS_ERRORED,
-        error: err.toString()
+        error: toError(err).toString()
       })
 
     }
@@ -287,7 +288,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
     } catch(err) {
       this.setState({
         status: Status.STATUS_ERRORED,
-        error: err.toString()
+        error: toError(err).toString()
       })
 
     }

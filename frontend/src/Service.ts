@@ -1,16 +1,16 @@
-import { AxiosResponse, AxiosError } from 'axios'
+import { AxiosResponse } from 'axios'
 
 interface IApiSuccessResponse<T> {
-  ok: true,
+  ok: true
   data: T
 }
 
-interface IApiFailureResponse<T> {
+interface IApiFailureResponse {
   ok: false
-  data: AxiosError<T>
+  data: Error
 }
 
-export type ServiceResponse<T> = IApiSuccessResponse<T> | IApiFailureResponse<AxiosError<T>>
+export type ServiceResponse<T> = IApiSuccessResponse<T> | IApiFailureResponse
 
 export const buildResponse = <T>(res: AxiosResponse<T>): IApiSuccessResponse<T> => {
   return {
@@ -19,9 +19,15 @@ export const buildResponse = <T>(res: AxiosResponse<T>): IApiSuccessResponse<T> 
   }
 }
 
-export const buildErrorResponse = <T>(err: AxiosError<T>): IApiFailureResponse<T> => {
+/** Catch clauses are typed `unknown`, so normalise whatever was thrown into an Error. */
+export const toError = (err: unknown): Error => {
+  if (err instanceof Error) return err
+  return new Error(String(err))
+}
+
+export const buildErrorResponse = (err: unknown): IApiFailureResponse => {
   return {
     ok: false,
-    data: err
+    data: toError(err)
   }
 }

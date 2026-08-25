@@ -1,4 +1,6 @@
 node_modules
+build
+design
 Dockerfile*
 .gitignore
 README.md

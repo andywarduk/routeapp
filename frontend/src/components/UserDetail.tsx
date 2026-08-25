@@ -157,7 +157,7 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
 
     const editControl = <T extends {}>(obj: T, elem: keyof T, desc: string, colWidth: number = 12) => {
       const value = '' + obj[elem]
-      const id = '' + elem
+      const id = String(elem)
 
       return (
         <div className="form-group">
