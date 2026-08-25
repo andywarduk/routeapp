@@ -6,6 +6,8 @@ import Nav from './Nav'
 
 interface IProps {
   navContent?: ReactNode
+  // React 19 removed the implicit children prop from Component<P>
+  children?: ReactNode
 }
 
 // Class definition

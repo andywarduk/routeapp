@@ -27,7 +27,7 @@ interface IValuesAndUnits extends IValues, IUnits {}
 
 interface IState extends IValuesAndUnits {
   srchText: string
-  lastFilter: IRouteSearchFilter | {}
+  lastFilter: IRouteSearchFilter
 }
 
 interface Preset {
@@ -191,19 +191,16 @@ export default class Filter extends Component<IProps, IState> {
             onChange={(evt) => this.inputChanged(value, evt)}
             value={this.state[value]}
           />
-          <div className='input-group-append'>
-            <button
-              type='button'
-              className='btn btn-secondary dropdown-toggle'
-              data-toggle='dropdown'
-              aria-haspopup='true'
-              aria-expanded='false'
-            >
-              {this.state[unit]}
-            </button>
-            <div className='dropdown-menu' role='menu'>
-              {unitMenuItems}
-            </div>
+          <button
+            type='button'
+            className='btn btn-secondary dropdown-toggle'
+            data-bs-toggle='dropdown'
+            aria-expanded='false'
+          >
+            {this.state[unit]}
+          </button>
+          <div className='dropdown-menu' role='menu'>
+            {unitMenuItems}
           </div>
         </div>
       </div>
@@ -266,7 +263,7 @@ export default class Filter extends Component<IProps, IState> {
         <button
           key={presetName}
           type='button'
-          className={`my-1 mr-1 btn btn-${preset.colour}`}
+          className={`my-1 me-1 btn btn-${preset.colour}`}
           onClick={onClickFn}
         >
           {preset.desc}

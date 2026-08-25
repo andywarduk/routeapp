@@ -4,9 +4,11 @@ import { buildResponse, buildErrorResponse, ServiceResponse } from './Service'
 
 // Types
 
+/** A route as returned by the Strava API; stored verbatim. */
 export interface IStravaRoute {
-  // TODO
-  [propName: string]: any
+  name?: string
+  updated_at?: string
+  [propName: string]: unknown
 }
 
 // Class definition

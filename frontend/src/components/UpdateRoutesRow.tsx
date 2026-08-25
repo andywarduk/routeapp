@@ -36,7 +36,7 @@ interface IState {
 
 export default class UpdateRoutesRow extends Component<IProps, IState> {
   static contextType: typeof StravaContext = StravaContext
-  context!: React.ContextType<typeof StravaContext>
+  declare context: React.ContextType<typeof StravaContext>
 
   stravaService: StravaService
   routeService: RouteService
@@ -222,7 +222,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
         onClick={action}
       >
         {icon}
-        <span className='ml-2'>{desc}</span>
+        <span className='ms-2'>{desc}</span>
       </button>
     )
   }
@@ -235,7 +235,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
       `btn-danger`,
       'btn-sm',
       'text-nowrap',
-      'ml-1'
+      'ms-1'
     ]
 
     const btnStyle = {
@@ -252,7 +252,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
         onClick={this.deleteRoute}
       >
         <FontAwesomeIcon icon={faTrash} spin={false}/>
-        <span className='ml-2'>Delete</span>
+        <span className='ms-2'>Delete</span>
       </button>
     )
   }

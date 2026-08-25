@@ -1,7 +1,7 @@
 import { Component } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
 
 import { IUser } from '../UserService'
+import { withRouter, RouterProps } from './withRouter'
 
 // Types
 
@@ -12,7 +12,7 @@ interface IProps {
 
 // Class definition
 
-class UserRow extends Component<RouteComponentProps & IProps> {
+class UserRow extends Component<RouterProps & IProps> {
 
   commaSep = (...args: string[]) => {
     return args.reduce((result, str) => {
@@ -22,12 +22,12 @@ class UserRow extends Component<RouteComponentProps & IProps> {
       }
       return result
     }, '')
-  } 
+  }
 
   permBadge = (colour: string, text: string) => {
     const classes = [
       'badge',
-      `badge-${colour}`,
+      `bg-${colour}`,
       'btn-sm',
       'text-nowrap'
     ]
@@ -43,9 +43,9 @@ class UserRow extends Component<RouteComponentProps & IProps> {
   }
 
   click = () => {
-    const { history, location, user } = this.props
+    const { navigate, location, user } = this.props
 
-    history.push(`${location.pathname}/${user.athleteid}`)
+    navigate(`${location.pathname.replace(/\/+$/, '')}/${user.athleteid}`)
   }
 
   render = () => {
@@ -57,17 +57,17 @@ class UserRow extends Component<RouteComponentProps & IProps> {
     if (userPerms) {
       if (userPerms.admin) {
         perms.push(this.permBadge('danger', 'Admin'))
-        
+
       } else {
         for (const k of Object.keys(userPerms)) {
           if (k !== 'viewRoutes' && k !== 'admin') {
-            perms.push(this.permBadge('warning', 'Modify'))  
+            perms.push(this.permBadge('warning', 'Modify'))
             break
           }
         }
 
         if (perms.length === 0) {
-          perms.push(this.permBadge('secondary', 'User'))  
+          perms.push(this.permBadge('secondary', 'User'))
         }
       }
     }

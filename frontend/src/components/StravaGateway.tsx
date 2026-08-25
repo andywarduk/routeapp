@@ -1,12 +1,12 @@
-import { Component, ComponentType } from 'react'
-import { withRouter, Redirect, RouteComponentProps } from 'react-router-dom'
+import { Component, ComponentType, ReactNode } from 'react'
+import { Navigate } from 'react-router-dom'
 import { LatLngTuple } from 'leaflet'
-import queryString from 'query-string'
 import polyline from '@mapbox/polyline'
 
 import StravaContext, { IStravaContext } from './StravaContext'
 import AuthService from '../AuthService'
 import RouteService from '../RouteService'
+import { withRouter, RouterProps } from './withRouter'
 
 // Types
 
@@ -19,7 +19,8 @@ enum AuthStage {
 }
 
 interface IProps {
-  HoldPage: ComponentType
+  HoldPage: ComponentType<{ children?: ReactNode }>
+  children?: ReactNode
 }
 
 interface IState {
@@ -35,7 +36,7 @@ interface IState {
 
 // Class definition
 
-class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
+class StravaGateway extends Component<RouterProps & IProps, IState> {
 
   authService: AuthService
   routeService: RouteService
@@ -81,15 +82,14 @@ class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
     }
   }
 
-  constructor(props: RouteComponentProps & IProps) {
+  constructor(props: RouterProps & IProps) {
     super(props)
 
-    // Get router details
-    const { match, location } = this.props
+    // Get router details. The gateway wraps the whole app at the router root,
+    // so the sub path is simply the current pathname.
+    const { location } = this.props
 
-    // Get sub path
-    const matchPath = match.path.replace(/\/+$/, "");
-    const subPath = location.pathname.substr(matchPath.length)
+    const subPath = location.pathname
 
     // Create route service
     this.routeService = new RouteService()
@@ -103,15 +103,16 @@ class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
 
     if (subPath === `/${this.tokenPath}` || subPath.startsWith(`/${this.tokenPath}/`)) {
       // At token response URL
-      const searchValues = queryString.parse(location.search)
+      const searchValues = new URLSearchParams(location.search)
+      const code = searchValues.get('code')
 
-      if (searchValues.error || !searchValues.code || typeof(searchValues.code) !== 'string') {
+      if (searchValues.get('error') || !code) {
         // Failed response
         authStage = AuthStage.AUTHSTAGE_FAIL
       } else {
         // Got token
         authStage = AuthStage.AUTHSTAGE_TOKEN
-        token = searchValues.code
+        token = code
       }
     } 
 
@@ -148,7 +149,7 @@ class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
         })  
       }
 
-    } catch (err) {
+    } catch {
       // Failed
       this.setState({
         authStage: AuthStage.AUTHSTAGE_TOKENFAIL
@@ -157,24 +158,23 @@ class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
     }
   }
 
-  tokenRedirect = (subPath: string, matchPath: string, normalContent: JSX.Element | string) => {
+  tokenRedirect = (subPath: string, normalContent: ReactNode) => {
     // If URL is the token URL then redirect to the original URL...
     if (subPath === `/${this.tokenPath}` || subPath.startsWith(`/${this.tokenPath}/`)) {
-      const redirect = `${matchPath}${subPath.substr(this.tokenPath.length + 1)}`
+      const redirect = subPath.substring(this.tokenPath.length + 1) || '/'
 
-      return <Redirect to={redirect}/>
-    } 
-    
+      return <Navigate to={redirect} replace/>
+    }
+
     // ... otherwise return the normal contents
     return normalContent
   }
 
   render() {
     const { authStage } = this.state
-    const { match, location, children } = this.props
+    const { location, children } = this.props
 
-    const matchPath = match.path.replace(/\/+$/, "");
-    const subPath = location.pathname.substr(matchPath.length)
+    const subPath = location.pathname
 
     let content
 
@@ -182,18 +182,18 @@ class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
       case AuthStage.AUTHSTAGE_START:
         // Redirect to strava for authentication
         {
-          const returnPath = `${window.location.origin}${matchPath}/${this.tokenPath}${subPath}`
+          const returnPath = `${window.location.origin}/${this.tokenPath}${subPath}`
 
-          const search = {
-            client_id: import.meta.env.VITE_STRAVA_CLIENT_ID,
+          const search = new URLSearchParams({
+            client_id: import.meta.env.VITE_STRAVA_CLIENT_ID || '',
             response_type: 'code',
             redirect_uri: returnPath,
             approval_prompt: 'auto',
             scope: 'read'
-          }
+          })
 
           setTimeout(() => {
-            window.location.href = `http://www.strava.com/oauth/authorize?${queryString.stringify(search)}`
+            window.location.href = `https://www.strava.com/oauth/authorize?${search.toString()}`
           }, 0)
           
           content = this.holdingPage('Redirecting to Strava for authentication...')
@@ -208,13 +208,13 @@ class StravaGateway extends Component<RouteComponentProps & IProps, IState> {
 
       case AuthStage.AUTHSTAGE_TOKENFAIL:
         // Failed authentication at token exchange
-        content = this.tokenRedirect(subPath, matchPath, this.holdingPage('Authentication failure'))
+        content = this.tokenRedirect(subPath, this.holdingPage('Authentication failure'))
 
         break
   
       case AuthStage.AUTHSTAGE_AUTH:
         // Authenticated
-        content = this.tokenRedirect(subPath, matchPath, (
+        content = this.tokenRedirect(subPath, (
           <StravaContext.Provider value={this.stravaContext}>
             {children}
           </StravaContext.Provider>

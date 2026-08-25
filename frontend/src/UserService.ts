@@ -14,9 +14,25 @@ export interface IUserSearchOptions {
   perms?: boolean
 }
 
+export interface IStravaUserSummary {
+  id: number
+  username: string
+  firstname: string
+  lastname: string
+  city: string
+  state: string
+  country: string
+  sex: string
+  created_at: string
+  updated_at: string
+  profile: string
+  profile_medium: string
+}
+
 export interface IUser {
+  athleteid: number
+  stravaUser: IStravaUserSummary
   perms?: IPermissionList
-  [key: string]: any
 }
 
 // Class definition

@@ -1,5 +1,4 @@
 import React, { Component, SyntheticEvent } from 'react'
-import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
@@ -7,11 +6,9 @@ import UserService, { IUser } from '../UserService'
 import AuthService from '../AuthService'
 import StravaContext from './StravaContext'
 import { IPermissionKey, IPermissionList } from '../Permissions'
+import { withRouter, RouterProps } from './withRouter'
 
 // Types
-
-interface IProps {
-}
 
 interface IState {
   userLoading: boolean
@@ -29,14 +26,14 @@ interface IUrlParams {
 
 // Class definition
 
-class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, IState> {
+class UserDetail extends Component<RouterProps<IUrlParams>, IState> {
   static contextType: typeof StravaContext = StravaContext
-  context!: React.ContextType<typeof StravaContext>
+  declare context: React.ContextType<typeof StravaContext>
 
   authService: AuthService
   userService: UserService
 
-  constructor(props: RouteComponentProps<IUrlParams> & IProps) {
+  constructor(props: RouterProps<IUrlParams>) {
     super(props)
 
     this.state = {
@@ -54,7 +51,7 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
   }
 
   componentDidMount = () => {
-    const { userId } = this.props.match.params
+    const { userId } = this.props.params
 
     this.loadPermKeys()
     this.loadUser(parseFloat(userId))
@@ -77,7 +74,7 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
       return (
         <div className='row mt-2'>
           <div className='col'>
-            <span className='mr-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
+            <span className='me-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
             </div>
         </div>
       )
@@ -155,12 +152,12 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
       updated_at: new Date(Date.parse(stravaUser.updated_at)).toLocaleDateString(undefined, dateOptions)
     }
 
-    const editControl = <T extends {}>(obj: T, elem: keyof T, desc: string, colWidth: number = 12) => {
+    const editControl = <T extends object>(obj: T, elem: keyof T, desc: string, colWidth: number = 12) => {
       const value = '' + obj[elem]
       const id = String(elem)
 
       return (
-        <div className="form-group">
+        <div className="mb-3">
           <label htmlFor={id} className="col col-form-label">{desc}:</label>
           <div className={`col-${colWidth}`}>
             <input type="text" className='form-control' readOnly id={id} value={value}/>
@@ -197,7 +194,7 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
               <form>
                 {permControls}
                 <button
-                  className='btn btn-primary ml-3 mb-3'
+                  className='btn btn-primary ms-3 mb-3'
                   type='submit'
                   onClick={this.save}
                   disabled={saving || !changed}
@@ -276,10 +273,9 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
     const { id } = currentTarget
     const { user } = this.state
 
-    let perms: IPermissionList = {}
-    if (user) {
-      perms = {...user.perms}
-    }
+    if (!user) return
+
+    const perms: IPermissionList = {...user.perms}
 
     if (perms[id]) delete perms[id]
     else perms[id] = true
@@ -321,4 +317,5 @@ class UserDetail extends Component<RouteComponentProps<IUrlParams> & IProps, ISt
 
 }
 
-export default withRouter(UserDetail)
+// TParams cannot be inferred through the constraint, so name it here
+export default withRouter<RouterProps<IUrlParams>, IUrlParams>(UserDetail)

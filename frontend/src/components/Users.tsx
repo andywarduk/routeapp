@@ -10,9 +10,6 @@ import StravaContext from './StravaContext'
 
 // Types
 
-interface IProps {
-}
-
 interface IState {
   users: IUser[]
   error: string | null
@@ -22,13 +19,13 @@ interface IState {
 
 // Class definition
 
-export default class Users extends Component<IProps, IState> {
+export default class Users extends Component<object, IState> {
   static contextType: typeof StravaContext = StravaContext
-  context!: React.ContextType<typeof StravaContext>
+  declare context: React.ContextType<typeof StravaContext>
 
   userService: UserService
 
-  constructor(props: IProps) {
+  constructor(props: object) {
     super(props)
 
     this.state = {
@@ -118,7 +115,7 @@ export default class Users extends Component<IProps, IState> {
       )
     }
 
-    const headingCells: JSX.Element[] = []
+    const headingCells: React.JSX.Element[] = []
     const colClasses: string[][] = []
 
     const addHeadingCell = (col: string | null, desc: string, span: number,

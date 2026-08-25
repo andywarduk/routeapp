@@ -1,9 +1,13 @@
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 
 import './index.css'
 import App from './components/App'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.bundle'
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import 'leaflet/dist/leaflet.css'
 
-ReactDOM.render(<App />, document.getElementById('root'))
+const container = document.getElementById('root')
+
+if (!container) throw new Error('Root element not found')
+
+createRoot(container).render(<App />)
