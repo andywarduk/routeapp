@@ -51,12 +51,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Both .env files are gitignored, so CI has to synthesise them. The
-      # frontend build inlines VITE_* values at build time, and both compose
-      # files reference backend/.env via env_file, which `config` resolves.
+      # All three .env files are gitignored, so CI has to synthesise them. The
+      # frontend build inlines VITE_* values at build time, both compose files
+      # reference backend/.env via env_file, and the prod compose file
+      # interpolates the root .env - APP_DOMAIN is declared required there, so
+      # `config` fails without it.
       # Placeholders only - this job proves the images build, it deploys nothing.
       - name: Placeholder env files
         run: |
+          printf 'APP_DOMAIN=ci.example.com\nCERTBOT_EMAIL=ci@example.com\n' > .env
           printf 'VITE_STRAVA_CLIENT_ID=0\nVITE_MAP_CENTRE=51.43,-2.19\n' > frontend/.env
           printf 'STRAVA_CLIENT_ID=0\nSTRAVA_CLIENT_SECRET=ci\nJWT_SECRET=ci\nMONGO_INITDB_ROOT_USERNAME=ci\nMONGO_INITDB_ROOT_PASSWORD=ci\n' > backend/.env
 
