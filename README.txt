@@ -25,3 +25,13 @@ Local development without Docker
   cd frontend && npm ci && BACKEND_URL=http://localhost:6200 npm run dev
 
 Requires Node 22 or later.
+
+Checks
+------
+
+Both packages expose the same scripts, which is what CI runs:
+
+  npm run lint
+  npm run typecheck
+  npm test
+  npm run build

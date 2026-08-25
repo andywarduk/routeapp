@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "Route app backend",
   "scripts": {
-    "build": "tsc",
-    "watch": "concurrently -k -p \"[{name}]\" -n \"tsc,nodemon\" -c \"cyan.bold,green.bold\" \"tsc --watch\" \"nodemon --watch build build/app.js\"",
+    "build": "tsc --project tsconfig.build.json",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"tsc,nodemon\" -c \"cyan.bold,green.bold\" \"tsc --project tsconfig.build.json --watch\" \"nodemon --watch build build/app.js\"",
     "start": "node build/app.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "author": "",
   "license": "ISC",
@@ -35,7 +36,8 @@
     "globals": "^17.11.0",
     "nodemon": "^3.1.14",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.68.0"
+    "typescript-eslint": "^8.68.0",
+    "vitest": "^4.1.11"
   },
   "engines": {
     "node": ">=22"

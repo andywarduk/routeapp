@@ -10,10 +10,10 @@ const router = express.Router()
 // Routes schema
 import Routes, { IRoutes } from '../models/routes'
 
-const regExEscape = (text: string) => {
+export const regExEscape = (text: string) => {
   const specials = [
     '/', '.', '*', '+', '?', '|',
-    '(', ')', '[', ']', '{', '}', '\\'
+    '(', ')', '[', ']', '{', '}', '^', '$', '\\'
   ]
 
   const sRE = new RegExp(
@@ -29,7 +29,7 @@ interface Range {
 }
 
 /** Build a mongo range condition, or undefined when neither bound is set. */
-const rangeFilter = (from?: number, to?: number): Range | undefined => {
+export const rangeFilter = (from?: number, to?: number): Range | undefined => {
   const range: Range = {}
 
   if (from && from > 0) range.$gte = from
@@ -38,7 +38,7 @@ const rangeFilter = (from?: number, to?: number): Range | undefined => {
   return Object.keys(range).length > 0 ? range : undefined
 }
 
-const buildPartialTextFilter = (filter: QueryFilter<IRoutes>, text: string) => {
+export const buildPartialTextFilter = (filter: QueryFilter<IRoutes>, text: string) => {
   const words = text.split(" ").map(regExEscape).filter((x) => x !== '')
 
   const andClause = []
