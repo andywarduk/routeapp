@@ -1,4 +1,4 @@
-import { Component, SyntheticEvent } from 'react'
+import { SyntheticEvent, useRef, useState } from 'react'
 
 import convertLength from '../LengthConv'
 import { IRouteSearchFilter } from '../RouteService'
@@ -25,9 +25,8 @@ interface IUnits {
 
 interface IValuesAndUnits extends IValues, IUnits {}
 
-interface IState extends IValuesAndUnits {
+interface IFilterState extends IValuesAndUnits {
   srchText: string
-  lastFilter: IRouteSearchFilter
 }
 
 interface Preset {
@@ -40,90 +39,130 @@ type Presets = {
   [key: string]: Preset
 }
 
-// Class definition
+// Constants
 
-export default class Filter extends Component<IProps, IState> {
+const distUnits = ['mi', 'km']
+const elevUnits = ['ft', 'm']
 
-  static distUnits = ['mi', 'km']
-  static elevUnits = ['ft', 'm']
+const presets: Presets = {
+  green: {
+    desc: 'Green',
+    colour: 'success',
+    values: {
+      distFrom_Value: '20',
+      distFrom_Unit: 'mi',
+      distTo_Value: '30',
+      distTo_Unit: 'mi',
+    }
+  },
+  orange: {
+    desc: 'Orange',
+    colour: 'warning',
+    values: {
+      distFrom_Value: '30',
+      distFrom_Unit: 'mi',
+      distTo_Value: '60',
+      distTo_Unit: 'mi',
+    }
+  },
+  blue: {
+    desc: 'Blue / Red',
+    colour: 'danger',
+    values: {
+      distFrom_Value: '40',
+      distFrom_Unit: 'mi',
+      distTo_Value: '100',
+      distTo_Unit: 'mi',
+    }
+  },
+  clear: {
+    desc: 'Reset',
+    colour: 'secondary'
+  }
+}
 
-  static presets: Presets = {
-    green: {
-      desc: 'Green',
-      colour: 'success',
-      values: {
-        distFrom_Value: '20',
-        distFrom_Unit: 'mi',
-        distTo_Value: '30',
-        distTo_Unit: 'mi',
+const defaultValues = (): IValues => {
+  return {
+    distFrom_Value: '',
+    distTo_Value: '',
+    elevFrom_Value: '',
+    elevTo_Value: '',
+  }
+}
+
+const initialState = (): IFilterState => {
+  return {
+    ...defaultValues(),
+    srchText: '',
+    distFrom_Unit: distUnits[0],
+    distTo_Unit: distUnits[0],
+    elevFrom_Unit: elevUnits[0],
+    elevTo_Unit: elevUnits[0]
+  }
+}
+
+// Component
+
+export default function Filter({ filterCb }: IProps) {
+  const [state, setState] = useState<IFilterState>(initialState)
+
+  // The callback only fires when the filter itself changes, so the last one
+  // built is kept outside of state
+  const lastFilter = useRef<IRouteSearchFilter>({})
+
+  const filter = (newState: Partial<IFilterState>, debounce: boolean) => {
+    const filter: IRouteSearchFilter = {}
+
+    const nextState = {
+      ...state,
+      ...newState
+    }
+
+    if (nextState.srchText !== '') {
+      filter.srchText = nextState.srchText
+      filter.partialWord = true
+    }
+
+    if (nextState.distFrom_Value !== '')
+      filter.distFrom = convertLength(parseFloat(nextState.distFrom_Value), nextState.distFrom_Unit, 'm')
+
+    if (nextState.distTo_Value !== '')
+      filter.distTo = convertLength(parseFloat(nextState.distTo_Value), nextState.distTo_Unit, 'm')
+
+    if (nextState.elevFrom_Value !== '')
+      filter.elevFrom = convertLength(parseFloat(nextState.elevFrom_Value), nextState.elevFrom_Unit, 'm')
+
+    if (nextState.elevTo_Value !== '')
+      filter.elevTo = convertLength(parseFloat(nextState.elevTo_Value), nextState.elevTo_Unit, 'm')
+
+    setState(nextState)
+
+    if (JSON.stringify(filter) !== JSON.stringify(lastFilter.current)) {
+      lastFilter.current = filter
+
+      if (filterCb) {
+        filterCb(filter, debounce)
       }
-    },
-    orange: {
-      desc: 'Orange',
-      colour: 'warning',
-      values: {
-        distFrom_Value: '30',
-        distFrom_Unit: 'mi',
-        distTo_Value: '60',
-        distTo_Unit: 'mi',
-      }
-    },
-    blue: {
-      desc: 'Blue / Red',
-      colour: 'danger',
-      values: {
-        distFrom_Value: '40',
-        distFrom_Unit: 'mi',
-        distTo_Value: '100',
-        distTo_Unit: 'mi',
-      }
-    },
-    clear: {
-      desc: 'Reset',
-      colour: 'secondary'
     }
   }
 
-  constructor(props: IProps) {
-    super(props)
-
-    this.state = {
-      ...this.defaultValues(),
-      srchText: '',
-      distFrom_Unit: Filter.distUnits[0],
-      distTo_Unit: Filter.distUnits[0],
-      elevFrom_Unit: Filter.elevUnits[0],
-      elevTo_Unit: Filter.elevUnits[0],
-      lastFilter: {}
-    }
-  }
-
-  defaultValues = (): IValues => {
-    return {
-      distFrom_Value: '',
-      distTo_Value: '',
-      elevFrom_Value: '',
-      elevTo_Value: '',
-    }
-  }
-
-  loadPreset = (evt: SyntheticEvent, presetName: keyof Presets) => {
+  const loadPreset = (evt: SyntheticEvent, presetName: keyof Presets) => {
     evt.preventDefault()
 
-    const preset = Filter.presets[presetName]
+    const preset = presets[presetName]
     const { values = {} } = preset
 
     const newState = {
-      ...this.state,
-      ...this.defaultValues(),
+      ...state,
+      ...defaultValues(),
       ...values
     }
 
     // Convert units
     const convert = (valKey: keyof IValues, unitKey: keyof IUnits) => {
-      if (this.state[unitKey] !== newState[unitKey]) {
-        newState[valKey] = '' + Math.floor(convertLength(parseFloat(newState[valKey]), newState[unitKey], this.state[unitKey]))
-        newState[unitKey] = this.state[unitKey]
+      if (state[unitKey] !== newState[unitKey]) {
+        newState[valKey] = '' + Math.floor(convertLength(parseFloat(newState[valKey]), newState[unitKey], state[unitKey]))
+        newState[unitKey] = state[unitKey]
       }
     }
 
@@ -132,40 +171,28 @@ export default class Filter extends Component<IProps, IState> {
     convert('elevFrom_Value', 'elevFrom_Unit')
     convert('elevTo_Value', 'elevTo_Unit')
 
-    this.filter(newState, false)
+    filter(newState, false)
   }
 
-  dropDownChanged = (id: keyof IUnits, elem: string) => {
-    const newState = {
-      [id]: elem
-    }
-
-    this.filter(newState, false)
+  const dropDownChanged = (id: keyof IUnits, elem: string) => {
+    filter({ [id]: elem }, false)
   }
 
-  inputChanged = (id: keyof IValues, evt: SyntheticEvent<HTMLInputElement>) => {
+  const inputChanged = (id: keyof IValues, evt: SyntheticEvent<HTMLInputElement>) => {
     let value
     const valNum = parseFloat(evt.currentTarget.value)
 
     if (valNum === 0 || isNaN(valNum)) value = ''
     else value = '' + valNum
 
-    const newState = {
-      [id]: value
-    }
-
-    this.filter(newState, true)
+    filter({ [id]: value }, true)
   }
 
-  textChanged = (evt: SyntheticEvent<HTMLInputElement>) => {
-    const newState = {
-      srchText: evt.currentTarget.value
-    }
-
-    this.filter(newState, true)
+  const textChanged = (evt: SyntheticEvent<HTMLInputElement>) => {
+    filter({ srchText: evt.currentTarget.value }, true)
   }
 
-  unitInput = (placeholder: string, value: keyof IValues, unit: keyof IUnits, dropdown: string[]) => {
+  const unitInput = (placeholder: string, value: keyof IValues, unit: keyof IUnits, dropdown: string[]) => {
     const unitMenuItems = dropdown.map((elem, idx) => {
       return (
         <button
@@ -173,7 +200,7 @@ export default class Filter extends Component<IProps, IState> {
           type='button'
           role='menuitem'
           className='dropdown-item'
-          onClick={() => this.dropDownChanged(unit, elem)}
+          onClick={() => dropDownChanged(unit, elem)}
         >
           {elem}
         </button>
@@ -188,8 +215,8 @@ export default class Filter extends Component<IProps, IState> {
             id={value}
             className='form-control'
             placeholder={placeholder}
-            onChange={(evt) => this.inputChanged(value, evt)}
-            value={this.state[value]}
+            onChange={(evt) => inputChanged(value, evt)}
+            value={state[value]}
           />
           <button
             type='button'
@@ -197,7 +224,7 @@ export default class Filter extends Component<IProps, IState> {
             data-bs-toggle='dropdown'
             aria-expanded='false'
           >
-            {this.state[unit]}
+            {state[unit]}
           </button>
           <div className='dropdown-menu' role='menu'>
             {unitMenuItems}
@@ -207,117 +234,68 @@ export default class Filter extends Component<IProps, IState> {
     )
   }
 
-  filter = (newState: Partial<IState>, debounce: boolean) => {
-    const { filterCb } = this.props
+  // Build preset buttons
+  const presetButtons = []
 
-    const filter: IRouteSearchFilter = {}
+  for (const presetName in presets) {
+    const preset = presets[presetName]
 
-    const state = {
-      ...this.state,
-      ...newState
-    }
-
-    if (state.srchText !== '') {
-      filter.srchText = state.srchText
-      filter.partialWord = true
-    }
-
-    if (state.distFrom_Value !== '')
-      filter.distFrom = convertLength(parseFloat(state.distFrom_Value), state.distFrom_Unit, 'm')
-
-    if (state.distTo_Value !== '')
-      filter.distTo = convertLength(parseFloat(state.distTo_Value), state.distTo_Unit, 'm')
-
-    if (state.elevFrom_Value !== '')
-      filter.elevFrom = convertLength(parseFloat(state.elevFrom_Value), state.elevFrom_Unit, 'm')
-
-    if (state.elevTo_Value !== '')
-      filter.elevTo = convertLength(parseFloat(state.elevTo_Value), state.elevTo_Unit, 'm')
-
-    if (JSON.stringify(filter) !== JSON.stringify(state.lastFilter)) {
-      state.lastFilter = filter
-      this.setState(state)
-
-      if (filterCb) {
-        filterCb(filter, debounce)
-      }
-    } else {
-      this.setState(state)
-    }
-  }
-
-  render() {
-    const { srchText } = this.state
-
-    // Build preset buttons
-    const presetButtons = []
-
-    for (const presetName in Filter.presets) {
-      const preset = Filter.presets[presetName]
-
-      const onClickFn = ((presetName) => {
-        return (evt: SyntheticEvent) => this.loadPreset(evt, presetName)
-      })(presetName)
-
-      presetButtons.push(
-        <button
-          key={presetName}
-          type='button'
-          className={`my-1 me-1 btn btn-${preset.colour}`}
-          onClick={onClickFn}
-        >
-          {preset.desc}
-        </button>
-      )
-    }
-
-    // Build form
-    return (
-      <form>
-
-        <div className='row'>
-          <div className='col-12 mt-1'>
-            <input
-              id='srchText'
-              className='form-control my-1'
-              placeholder='Search Text'
-              onChange={(evt) => this.textChanged(evt)}
-              value={srchText}
-            />
-          </div>
-        </div>
-
-        <div className='row'>
-          <div className='col-12 mt-1'>
-            {presetButtons}
-          </div>
-        </div>
-
-        <div className='row'>
-          <div className='col-12'>
-            <label htmlFor='distFrom' className='my-1'>Distance</label>
-          </div>
-        </div>
-
-        <div className='row'>
-          {this.unitInput('Distance From', 'distFrom_Value', 'distFrom_Unit', Filter.distUnits)}
-          {this.unitInput('Distance To', 'distTo_Value', 'distTo_Unit', Filter.distUnits)}
-        </div>
-
-        <div className='row'>
-          <div className='col-12'>
-            <label htmlFor='elevFrom' className='my-1'>Elevation</label>
-          </div>
-        </div>
-
-        <div className='row'>
-          {this.unitInput('Elevation From', 'elevFrom_Value', 'elevFrom_Unit', Filter.elevUnits)}
-          {this.unitInput('Elevation To', 'elevTo_Value', 'elevTo_Unit', Filter.elevUnits)}
-        </div>
-
-      </form>
+    presetButtons.push(
+      <button
+        key={presetName}
+        type='button'
+        className={`my-1 me-1 btn btn-${preset.colour}`}
+        onClick={(evt: SyntheticEvent) => loadPreset(evt, presetName)}
+      >
+        {preset.desc}
+      </button>
     )
-
   }
 
+  // Build form
+  return (
+    <form>
+
+      <div className='row'>
+        <div className='col-12 mt-1'>
+          <input
+            id='srchText'
+            className='form-control my-1'
+            placeholder='Search Text'
+            onChange={(evt) => textChanged(evt)}
+            value={state.srchText}
+          />
+        </div>
+      </div>
+
+      <div className='row'>
+        <div className='col-12 mt-1'>
+          {presetButtons}
+        </div>
+      </div>
+
+      <div className='row'>
+        <div className='col-12'>
+          <label htmlFor='distFrom' className='my-1'>Distance</label>
+        </div>
+      </div>
+
+      <div className='row'>
+        {unitInput('Distance From', 'distFrom_Value', 'distFrom_Unit', distUnits)}
+        {unitInput('Distance To', 'distTo_Value', 'distTo_Unit', distUnits)}
+      </div>
+
+      <div className='row'>
+        <div className='col-12'>
+          <label htmlFor='elevFrom' className='my-1'>Elevation</label>
+        </div>
+      </div>
+
+      <div className='row'>
+        {unitInput('Elevation From', 'elevFrom_Value', 'elevFrom_Unit', elevUnits)}
+        {unitInput('Elevation To', 'elevTo_Value', 'elevTo_Unit', elevUnits)}
+      </div>
+
+    </form>
+  )
 }

@@ -1,12 +1,11 @@
-import { Component, ComponentType, ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
+import { ComponentType, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
 import { LatLngTuple } from 'leaflet'
 import polyline from '@mapbox/polyline'
 
 import StravaContext, { IStravaContext } from './StravaContext'
-import AuthService from '../AuthService'
+import AuthService, { IAuth } from '../AuthService'
 import RouteService from '../RouteService'
-import { withRouter, RouterProps } from './withRouter'
 
 // Types
 
@@ -23,85 +22,39 @@ interface IProps {
   children?: ReactNode
 }
 
-interface IState {
-  authStage: AuthStage
-  token: null | string
-  polyLineCache: {
-    [key: number]: LatLngTuple[]
-  }
-  summaryPolyLineCache: {
-    [key: number]: LatLngTuple[]
-  }
+interface IPolyLineCache {
+  [key: number]: LatLngTuple[]
 }
 
-// Class definition
+// Services
 
-class StravaGateway extends Component<RouterProps & IProps, IState> {
+const authService = new AuthService()
+const routeService = new RouteService()
 
-  authService: AuthService
-  routeService: RouteService
-  tokenPath = 'token'
+const tokenPath = 'token'
 
-  stravaContext: IStravaContext = {
-    auth: null,
+const atTokenPath = (subPath: string) => {
+  return subPath === `/${tokenPath}` || subPath.startsWith(`/${tokenPath}/`)
+}
 
-    getCachedPolyLine: async (routeId: number) => {
-      const { polyLineCache } = this.state
+// Component
 
-      if (polyLineCache[routeId]) return polyLineCache[routeId]
-  
-      if (!this.stravaContext.auth) return null
+export default function StravaGateway({ HoldPage, children }: IProps) {
+  const location = useLocation()
 
-      const { jwt } = this.stravaContext.auth
-  
-      const polyLine = await this.routeService.getPolyline(jwt, routeId)
-  
-      if (!polyLine.ok) return null
-  
-      polyLineCache[routeId] = polyline.decode(polyLine.data) as LatLngTuple[]
-  
-      return polyLineCache[routeId]
-    },
-  
-    getCachedSummaryPolyLine: async (routeId) => {
-      const { summaryPolyLineCache } = this.state
+  // The gateway wraps the whole app at the router root, so the sub path is
+  // simply the current pathname.
+  const subPath = location.pathname
 
-      if (summaryPolyLineCache[routeId]) return summaryPolyLineCache[routeId]
-  
-      if (!this.stravaContext.auth) return null
-
-      const { jwt } = this.stravaContext.auth
-  
-      const polyLine = await this.routeService.getSummaryPolyline(jwt, routeId)
-  
-      if (!polyLine.ok) return null
-  
-      summaryPolyLineCache[routeId] = polyline.decode(polyLine.data) as LatLngTuple[]
-  
-      return summaryPolyLineCache[routeId]
-    }
-  }
-
-  constructor(props: RouterProps & IProps) {
-    super(props)
-
-    // Get router details. The gateway wraps the whole app at the router root,
-    // so the sub path is simply the current pathname.
-    const { location } = this.props
-
-    const subPath = location.pathname
-
-    // Create route service
-    this.routeService = new RouteService()
-
-    // Create the auth service
-    this.authService = new AuthService()
-
-    // Set up initial state
+  /*
+   * The initial stage is decided from the URL the app was loaded at, so it is
+   * worked out once rather than on every render.
+   */
+  const [initial] = useState(() => {
     let authStage = AuthStage.AUTHSTAGE_START
-    let token = null
+    let token: string | null = null
 
-    if (subPath === `/${this.tokenPath}` || subPath.startsWith(`/${this.tokenPath}/`)) {
+    if (atTokenPath(location.pathname)) {
       // At token response URL
       const searchValues = new URLSearchParams(location.search)
       const code = searchValues.get('code')
@@ -114,129 +67,110 @@ class StravaGateway extends Component<RouterProps & IProps, IState> {
         authStage = AuthStage.AUTHSTAGE_TOKEN
         token = code
       }
-    } 
-
-    // Set initial state
-    this.state = {
-      authStage,
-      token,
-      polyLineCache: {},
-      summaryPolyLineCache: {},
-    }
-    
-  }
-
-  componentDidMount = () => {
-    if (this.state.authStage === AuthStage.AUTHSTAGE_TOKEN) {
-      this.finishAuth()
-    }
-  }
-
-  finishAuth = async () => {
-    try {
-      // Finish authentication on the back end
-      const res = await this.authService.auth(import.meta.env.VITE_STRAVA_CLIENT_ID || '', this.state.token || '')
-
-      if (res.ok) {
-        this.stravaContext.auth = res.data
-
-        this.setState({
-          authStage: AuthStage.AUTHSTAGE_AUTH,
-        })  
-      } else {
-        this.setState({
-          authStage: AuthStage.AUTHSTAGE_TOKENFAIL
-        })  
-      }
-
-    } catch {
-      // Failed
-      this.setState({
-        authStage: AuthStage.AUTHSTAGE_TOKENFAIL
-      })
-
-    }
-  }
-
-  tokenRedirect = (subPath: string, normalContent: ReactNode) => {
-    // If URL is the token URL then redirect to the original URL...
-    if (subPath === `/${this.tokenPath}` || subPath.startsWith(`/${this.tokenPath}/`)) {
-      const redirect = subPath.substring(this.tokenPath.length + 1) || '/'
-
-      return <Navigate to={redirect} replace/>
     }
 
-    // ... otherwise return the normal contents
-    return normalContent
-  }
+    return { authStage, token }
+  })
 
-  render() {
-    const { authStage } = this.state
-    const { location, children } = this.props
+  const [authStage, setAuthStage] = useState<AuthStage>(initial.authStage)
+  const [auth, setAuth] = useState<IAuth | null>(null)
 
-    const subPath = location.pathname
+  // The caches are read straight back after being written, so they are held
+  // outside of state - filling one must not trigger a render
+  const polyLineCache = useRef<IPolyLineCache>({})
+  const summaryPolyLineCache = useRef<IPolyLineCache>({})
 
-    let content
+  const getCachedPolyLine = useCallback(async (routeId: number) => {
+    const cache = polyLineCache.current
 
-    switch(authStage) {
-      case AuthStage.AUTHSTAGE_START:
-        // Redirect to strava for authentication
-        {
-          const returnPath = `${window.location.origin}/${this.tokenPath}${subPath}`
+    if (cache[routeId]) return cache[routeId]
 
-          const search = new URLSearchParams({
-            client_id: import.meta.env.VITE_STRAVA_CLIENT_ID || '',
-            response_type: 'code',
-            redirect_uri: returnPath,
-            approval_prompt: 'auto',
-            scope: 'read'
-          })
+    if (!auth) return null
 
-          setTimeout(() => {
-            window.location.href = `https://www.strava.com/oauth/authorize?${search.toString()}`
-          }, 0)
-          
-          content = this.holdingPage('Redirecting to Strava for authentication...')
+    const polyLine = await routeService.getPolyline(auth.jwt, routeId)
+
+    if (!polyLine.ok) return null
+
+    cache[routeId] = polyline.decode(polyLine.data) as LatLngTuple[]
+
+    return cache[routeId]
+  }, [auth])
+
+  const getCachedSummaryPolyLine = useCallback(async (routeId: number) => {
+    const cache = summaryPolyLineCache.current
+
+    if (cache[routeId]) return cache[routeId]
+
+    if (!auth) return null
+
+    const polyLine = await routeService.getSummaryPolyline(auth.jwt, routeId)
+
+    if (!polyLine.ok) return null
+
+    cache[routeId] = polyline.decode(polyLine.data) as LatLngTuple[]
+
+    return cache[routeId]
+  }, [auth])
+
+  const stravaContext: IStravaContext = useMemo(() => {
+    return {
+      auth,
+      getCachedPolyLine,
+      getCachedSummaryPolyLine
+    }
+  }, [auth, getCachedPolyLine, getCachedSummaryPolyLine])
+
+  // Finish authentication on the back end once a token has been picked up
+  useEffect(() => {
+    if (authStage !== AuthStage.AUTHSTAGE_TOKEN) return
+
+    let cancelled = false
+
+    const finishAuth = async () => {
+      try {
+        const res = await authService.auth(import.meta.env.VITE_STRAVA_CLIENT_ID || '', initial.token || '')
+
+        if (cancelled) return
+
+        if (res.ok) {
+          setAuth(res.data)
+          setAuthStage(AuthStage.AUTHSTAGE_AUTH)
+        } else {
+          setAuthStage(AuthStage.AUTHSTAGE_TOKENFAIL)
         }
-        break
 
-      case AuthStage.AUTHSTAGE_TOKEN:
-        // Got token - finish authentication
-        content = this.holdingPage('Finishing authentication...')
+      } catch {
+        // Failed
+        if (!cancelled) setAuthStage(AuthStage.AUTHSTAGE_TOKENFAIL)
 
-        break
-
-      case AuthStage.AUTHSTAGE_TOKENFAIL:
-        // Failed authentication at token exchange
-        content = this.tokenRedirect(subPath, this.holdingPage('Authentication failure'))
-
-        break
-  
-      case AuthStage.AUTHSTAGE_AUTH:
-        // Authenticated
-        content = this.tokenRedirect(subPath, (
-          <StravaContext.Provider value={this.stravaContext}>
-            {children}
-          </StravaContext.Provider>
-        ))
-
-        break
-
-      default:
-        // Failure
-        content = this.holdingPage('Authentication failure')
-
-        break
-        
+      }
     }
 
-    return content
+    finishAuth()
 
-  }
+    return () => {
+      cancelled = true
+    }
+  }, [authStage, initial.token])
 
-  holdingPage = (message: string) => {
-    const { HoldPage } = this.props
+  // Redirect to strava for authentication
+  useEffect(() => {
+    if (authStage !== AuthStage.AUTHSTAGE_START) return
 
+    const returnPath = `${window.location.origin}/${tokenPath}${subPath}`
+
+    const search = new URLSearchParams({
+      client_id: import.meta.env.VITE_STRAVA_CLIENT_ID || '',
+      response_type: 'code',
+      redirect_uri: returnPath,
+      approval_prompt: 'auto',
+      scope: 'read'
+    })
+
+    window.location.href = `https://www.strava.com/oauth/authorize?${search.toString()}`
+  }, [authStage, subPath])
+
+  const holdingPage = (message: string) => {
     if (HoldPage && typeof(HoldPage) === 'function') {
       return (
         <HoldPage>
@@ -252,6 +186,42 @@ class StravaGateway extends Component<RouterProps & IProps, IState> {
     return message
   }
 
-}
+  const tokenRedirect = (normalContent: ReactNode) => {
+    // If URL is the token URL then redirect to the original URL...
+    if (atTokenPath(subPath)) {
+      const redirect = subPath.substring(tokenPath.length + 1) || '/'
 
-export default withRouter(StravaGateway)
+      return <Navigate to={redirect} replace/>
+    }
+
+    // ... otherwise return the normal contents
+    return normalContent
+  }
+
+  switch (authStage) {
+    case AuthStage.AUTHSTAGE_START:
+      // Redirecting to strava (see the effect above)
+      return holdingPage('Redirecting to Strava for authentication...')
+
+    case AuthStage.AUTHSTAGE_TOKEN:
+      // Got token - finishing authentication
+      return holdingPage('Finishing authentication...')
+
+    case AuthStage.AUTHSTAGE_TOKENFAIL:
+      // Failed authentication at token exchange
+      return tokenRedirect(holdingPage('Authentication failure'))
+
+    case AuthStage.AUTHSTAGE_AUTH:
+      // Authenticated
+      return tokenRedirect(
+        <StravaContext.Provider value={stravaContext}>
+          {children}
+        </StravaContext.Provider>
+      )
+
+    default:
+      // Failure
+      return holdingPage('Authentication failure')
+
+  }
+}

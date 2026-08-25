@@ -1,4 +1,4 @@
-import { Component } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faCheckCircle } from '@fortawesome/free-solid-svg-icons'
 
@@ -7,44 +7,28 @@ import UpdateRoutesRow from './UpdateRoutesRow'
 import StravaContext from './StravaContext'
 import Permissions from '../Permissions'
 
-// Types
+// Service
 
-interface IState {
-  loading: boolean
-  error: null | string
-  routes: IRoute[],
-  checkAll: boolean
-}
+const routeService = new RouteService()
 
-// Class definition
+// Component
 
-export default class UpdateRoutes extends Component<object, IState> {
-  static contextType: typeof StravaContext = StravaContext
-  declare context: React.ContextType<typeof StravaContext>
+export default function UpdateRoutes() {
+  const { auth } = useContext(StravaContext)
 
-  routeService: RouteService
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [routes, setRoutes] = useState<IRoute[]>([])
+  const [checkAll, setCheckAll] = useState(false)
 
-  constructor(props: object) {
-    super(props)
+  const jwt = auth ? auth.jwt : null
 
-    this.state = {
-      loading: true,
-      error: null,
-      routes: [],
-      checkAll: false
-    }
+  useEffect(() => {
+    if (!jwt) return
 
-    this.routeService = new RouteService()
-  }
-
-  componentDidMount = async () => {
-    const { auth } = this.context
-
-    if (auth) {
-      const { jwt } = auth
-
+    const loadRoutes = async () => {
       // Make request
-      const res = await this.routeService.search(jwt, {
+      const res = await routeService.search(jwt, {
         columns: ['routeid', 'name', 'updated_at'],
         sort: {
           column: 'routeid',
@@ -54,122 +38,101 @@ export default class UpdateRoutes extends Component<object, IState> {
 
       // Process results
       if (res.ok) {
-        this.setState({
-          routes: res.data,
-          error: null,
-          loading: false
-        })
+        setRoutes(res.data)
+        setError(null)
       } else {
-        this.setState({
-          error: res.data.toString(),
-          loading: false
-        })
-      }
-    }
-  }
-
-  render() {
-    const { auth } = this.context
-
-    if (auth) {
-      const { loading, error, routes, checkAll } = this.state
-
-      const { perms } = auth
-
-      const permissions = new Permissions(perms)
-
-      if (loading) {
-        return (
-          <div className='row mt-2'>
-            <div className='col'>
-              <span className='me-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
-              </div>
-          </div>
-        )
+        setError(res.data.toString())
       }
 
-      if (error){
-        return (
-          <div className='row mt-2'>
-            <div className='col'>
-              {error}
-            </div>
-          </div>
-        )
-      }
-
-      // Heading columns
-      const headCols = []
-
-      headCols.push(<th key='id' className='text-nowrap'>Id</th>)
-      headCols.push(<th key='name' className='text-nowrap'>Name</th>)
-
-      if (permissions.check('modifyRoutes') || permissions.check('deleteRoutes')) {
-        headCols.push(<th key='action' className='text-nowrap'>Action</th>)
-      }
-
-      // Rows
-      const rows = routes.map(r => {
-        return <UpdateRoutesRow route={r} key={r.routeid} autoCheck={checkAll} deleteNotify={this.deleteNotify}/>
-      })
-
-      // Check all routes button
-      if (permissions.check('checkAllRoutes')) {
-        const btnStyle = {
-          width: '120px'
-        }
-      
-        rows.unshift(
-          <tr key='0'>
-            <td></td>
-            <td></td>
-            <td>
-              <button
-                type='button'
-                className='btn btn-primary btn-sm text-nowrap'
-                style={btnStyle}
-                key='checkAll'
-                disabled={checkAll}
-                onClick={this.checkAllRoutes}
-              >
-                <FontAwesomeIcon icon={faCheckCircle} spin={false}/>
-                <span className='ms-2'>Check all</span>
-              </button>
-            </td>
-          </tr>
-        )
-      }
-
-      return (
-        <table className='table table-sm mt-2'>
-          <thead>
-            <tr>
-              {headCols}
-            </tr>
-          </thead>
-
-          <tbody>
-            {rows}
-          </tbody>
-        </table>
-      )
+      setLoading(false)
     }
 
-    return <></>
+    loadRoutes()
+  }, [jwt])
+
+  const deleteNotify = useCallback((routeid: number) => {
+    setRoutes((current) => current.filter((r) => r.routeid !== routeid))
+  }, [])
+
+  if (!auth) return <></>
+
+  const { perms } = auth
+
+  const permissions = new Permissions(perms)
+
+  if (loading) {
+    return (
+      <div className='row mt-2'>
+        <div className='col'>
+          <span className='me-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
+          </div>
+      </div>
+    )
   }
 
-  checkAllRoutes = () => {
-    this.setState({
-      checkAll: true
-    })
+  if (error){
+    return (
+      <div className='row mt-2'>
+        <div className='col'>
+          {error}
+        </div>
+      </div>
+    )
   }
 
-  deleteNotify = (routeid: number) => {
-    const { routes } = this.state
+  // Heading columns
+  const headCols = []
 
-    this.setState({
-      routes: routes.filter((r) => r.routeid !== routeid)
-    })
+  headCols.push(<th key='id' className='text-nowrap'>Id</th>)
+  headCols.push(<th key='name' className='text-nowrap'>Name</th>)
+
+  if (permissions.check('modifyRoutes') || permissions.check('deleteRoutes')) {
+    headCols.push(<th key='action' className='text-nowrap'>Action</th>)
   }
 
+  // Rows
+  const rows = routes.map(r => {
+    return <UpdateRoutesRow route={r} key={r.routeid} autoCheck={checkAll} deleteNotify={deleteNotify}/>
+  })
+
+  // Check all routes button
+  if (permissions.check('checkAllRoutes')) {
+    const btnStyle = {
+      width: '120px'
+    }
+
+    rows.unshift(
+      <tr key='0'>
+        <td></td>
+        <td></td>
+        <td>
+          <button
+            type='button'
+            className='btn btn-primary btn-sm text-nowrap'
+            style={btnStyle}
+            key='checkAll'
+            disabled={checkAll}
+            onClick={() => setCheckAll(true)}
+          >
+            <FontAwesomeIcon icon={faCheckCircle} spin={false}/>
+            <span className='ms-2'>Check all</span>
+          </button>
+        </td>
+      </tr>
+    )
+  }
+
+  return (
+    <table className='table table-sm mt-2'>
+      <thead>
+        <tr>
+          {headCols}
+        </tr>
+      </thead>
+
+      <tbody>
+        {rows}
+      </tbody>
+    </table>
+  )
 }
