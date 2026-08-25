@@ -37,16 +37,69 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: "${APP_DOMAIN:?set APP_DOMAIN in .env - see .env.example}"
+      # Keep envsubst to APP_* so it leaves nginx's own $variables alone
+      NGINX_ENVSUBST_FILTER: "^APP_"
+    volumes:
+      - certbot-conf:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
     depends_on:
       backend-prod:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      # /healthz rather than / because / is a 301 to the public origin, which
+      # does not necessarily resolve from inside the container.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
       interval: 30s
       timeout: 5s
       start_period: 10s
       retries: 3
 
+  # Renewal loop. Certificates last 90 days and certbot renews at 30 days
+  # remaining, so a twice-daily check is plenty; anything more often just
+  # spends rate limit.
+  #
+  # The webroot flags are repeated here on purpose. The first certificate is
+  # issued standalone, before nginx can start, so that is what the renewal
+  # config records - but by renewal time nginx owns port 80, and standalone
+  # would fail. Passing --webroot overrides the stored authenticator so the
+  # challenge is answered through the running nginx instead.
+  certbot:
+    image: "certbot/certbot:latest"
+    restart: always
+    volumes:
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: /bin/sh
+    command: >
+      -c 'trap exit TERM; while :; do
+            certbot renew --webroot -w /var/www/certbot --quiet;
+            sleep 12h & wait $${!};
+          done'
+    depends_on:
+      frontend-prod:
+        condition: service_healthy
+
+  # One-time issuance, held behind a profile so a normal `up` never starts it.
+  # Binds port 80 itself, so the rest of the stack has to be down when it runs.
+  certbot-init:
+    image: "certbot/certbot:latest"
+    profiles:
+      - "init"
+    ports:
+      - "80:80"
+    volumes:
+      - certbot-conf:/etc/letsencrypt
+    command: >
+      certonly --standalone --non-interactive --agree-tos
+      --cert-name "${APP_DOMAIN:?set APP_DOMAIN in .env - see .env.example}"
+      --email "${CERTBOT_EMAIL:?set CERTBOT_EMAIL in .env - see .env.example}"
+      -d "${APP_DOMAIN:?set APP_DOMAIN in .env - see .env.example}"
+
 volumes:
   data-db-prod:
   data-configdb-prod:
+  certbot-conf:
+  certbot-www:

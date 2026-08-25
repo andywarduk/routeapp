@@ -17,11 +17,50 @@ frontend/.env, then fill in the values.
   docker compose -f docker-compose-dev.yml up
 
 Use docker-compose-prod.yml for production. Add --pull to refresh base images.
+The production stack serves over HTTPS and needs the one-time setup below.
 
 Podman works as a drop-in - substitute "podman compose" for "docker compose".
 It needs a running machine first:
 
   podman machine start
+
+HTTPS
+-----
+
+The production stack terminates TLS in the frontend container, using a Let's
+Encrypt certificate obtained with certbot. Two things have to be true before
+any of it can work:
+
+  - A domain with an A or AAAA record pointing at this host. Let's Encrypt will
+    not issue for a bare IP address.
+  - Ports 80 and 443 reachable from the internet. Port 80 stays open after
+    setup - it answers the renewal challenge, and redirects everything else.
+
+Copy .env.example to .env and fill in APP_DOMAIN and CERTBOT_EMAIL.
+
+The first certificate has to exist before nginx will start, because nginx will
+not load a TLS server block whose certificate file is missing. Issue it with
+the stack down, so that port 80 is free:
+
+  docker compose -f docker-compose-prod.yml --profile init up certbot-init
+
+Then bring the stack up as normal. If the certificate is not there the frontend
+container stops with a message saying so rather than crashlooping.
+
+Renewal needs no intervention. The certbot service checks twice a day and
+renews at 30 days remaining, answering the challenge through the running nginx
+rather than binding port 80 itself, and nginx reloads every six hours to pick
+up whatever has been renewed. That path is worth proving once, straight after
+the first issuance, rather than finding out in three months:
+
+  docker compose -f docker-compose-prod.yml run --rm \
+    --entrypoint certbot certbot \
+    renew --webroot -w /var/www/certbot --dry-run
+
+Let's Encrypt allows five failed validations an hour, so use --dry-run while
+working anything out.
+
+The dev stack is plain HTTP on port 3000 and is unaffected by all of this.
 
 Local development without Docker
 --------------------------------

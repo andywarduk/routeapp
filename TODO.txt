@@ -1,9 +1,15 @@
-https - needs a certificate source (a domain plus ACME, or certs mounted into
-the frontend container) and a TLS server block in frontend/nginx.conf. Not
-done: nothing here can provision a certificate.
+https - done. Let's Encrypt via certbot, terminated in the frontend container.
+See the HTTPS section of README.txt for the one-time issuance step; renewal is
+automatic. Still needs a real domain - nothing here can conjure one up.
 
 Health checks - done. /api/health on the backend, plus healthcheck stanzas and
 condition: service_healthy in both compose files.
 
-Consider a Content-Security-Policy header in nginx.conf once the map tile and
-API origins are settled.
+Turn on HSTS in nginx.conf.template once https has been running cleanly for a
+while. Left off deliberately for the cutover: a max-age of a year is not
+practically reversible, since browsers that have seen it refuse plain http for
+that long regardless of what the server later says. Raise it in stages -
+max-age=300, then a day, then a year.
+
+Consider a Content-Security-Policy header in nginx.conf.template once the map
+tile and API origins are settled.
