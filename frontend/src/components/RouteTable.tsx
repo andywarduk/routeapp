@@ -29,7 +29,7 @@ export default class RouteTable extends Component<IProps> {
   render() {
     const { routes, sortCol, sortAsc } = this.props
 
-    const headingCells: JSX.Element[] = []
+    const headingCells: React.JSX.Element[] = []
     const colClasses: string[][] = []
 
     const addHeadingCell = (col: string | null, desc: string, span: number,
@@ -77,10 +77,10 @@ export default class RouteTable extends Component<IProps> {
     addHeadingCell('routeid', 'Link', 1, ['text-nowrap'], [], [])
     addHeadingCell('name', 'Name', 1, [], ['text-nowrap'], [])
     addHeadingCell(null, 'Description', 1, ['d-none', 'd-lg-table-cell'], ['text-nowrap'], [])
-    addHeadingCell('distance', 'mi/km', 1, ['text-nowrap', 'd-xl-none', 'd-lg-none', 'd-sm-none', 'text-right'], [], [])
-    addHeadingCell('distance', 'Distance', 2, ['text-nowrap', 'd-none', 'd-sm-table-cell'], ['text-center'], ['text-right'])
-    addHeadingCell('elevation_gain', 'Elevation', 2, ['text-nowrap', 'd-none', 'd-sm-table-cell'], ['text-center'], ['text-right'])
-    addHeadingCell('estimated_moving_time', 'Time', 1, ['text-nowrap', 'd-none', 'd-sm-table-cell', 'text-right'], [], [])
+    addHeadingCell('distance', 'mi/km', 1, ['text-nowrap', 'd-xl-none', 'd-lg-none', 'd-sm-none', 'text-end'], [], [])
+    addHeadingCell('distance', 'Distance', 2, ['text-nowrap', 'd-none', 'd-sm-table-cell'], ['text-center'], ['text-end'])
+    addHeadingCell('elevation_gain', 'Elevation', 2, ['text-nowrap', 'd-none', 'd-sm-table-cell'], ['text-center'], ['text-end'])
+    addHeadingCell('estimated_moving_time', 'Time', 1, ['text-nowrap', 'd-none', 'd-sm-table-cell', 'text-end'], [], [])
 
     const rows = routes.map((r) => {
       return <RouteRow route={r} key={r.routeid} colClasses={colClasses}/>

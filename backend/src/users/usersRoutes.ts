@@ -7,9 +7,9 @@ import { checkPermission } from '../auth/permissions'
 const router = express.Router()
 
 // Users schema
-import Users, { IUserModel } from '../models/users'
+import Users, { IUserDocument } from '../models/users'
 import UserPerms from '../models/userPerms'
-import { IStravaUserModel } from '../models/stravaUsers'
+import { IStravaUser } from '../models/stravaUsers'
 
 // Get users
 router.route('/users').post(
@@ -20,13 +20,13 @@ router.route('/users').post(
       const searchOptions = req.body
 
       // Projection
-      let projection = null
+      let projection: Record<string, 1> | null = null
 
       if (searchOptions.columns) {
         const columns = searchOptions.columns
 
         if (Array.isArray(columns)) {
-          projection = columns.reduce((acc, cur) => {
+          projection = columns.reduce((acc: Record<string, 1>, cur: string) => {
             acc[cur] = 1
             return acc
           }, {})
@@ -48,8 +48,8 @@ router.route('/users').post(
         const col = searchOptions.sort.column
         const order = searchOptions.sort.ascending ? 1 : -1
 
-        const compareCol = (a: IUserModel, b: IUserModel, cols: (keyof IStravaUserModel)[]): number => {
-          const thisCol: keyof IStravaUserModel = cols[cols.length - 1]
+        const compareCol = (a: IUserDocument, b: IUserDocument, cols: (keyof IStravaUser)[]): number => {
+          const thisCol: keyof IStravaUser = cols[cols.length - 1]
 
           if (a.stravaUser[thisCol] === b.stravaUser[thisCol]) {
             switch (thisCol) {
@@ -133,10 +133,13 @@ router.route('/users/:id/perms').put(
           ...req.body
         }
 
-        await UserPerms.findByIdAndUpdate(user.perms, perms, {
+        // Replace rather than merge - see the note in authRoutes about
+        // mongoose 7 removing the overwrite option
+        await UserPerms.findOneAndReplace({
+          _id: user.perms
+        }, perms, {
           upsert: true,
-          overwrite: true,
-          new: true
+          returnDocument: 'after'
         }).exec()
 
         response.msgResponse(res, `Replaced permissions for athlete ${id}`)

@@ -1,5 +1,6 @@
 import express from 'express'
 import passport from 'passport'
+import { QueryFilter, QueryOptions } from 'mongoose'
 
 import response from '../response'
 import { checkPermission } from '../auth/permissions'
@@ -7,12 +8,12 @@ import { checkPermission } from '../auth/permissions'
 const router = express.Router()
 
 // Routes schema
-import Routes from '../models/routes'
+import Routes, { IRoutes } from '../models/routes'
 
-const regExEscape = (text: string) => {
+export const regExEscape = (text: string) => {
   const specials = [
     '/', '.', '*', '+', '?', '|',
-    '(', ')', '[', ']', '{', '}', '\\'
+    '(', ')', '[', ']', '{', '}', '^', '$', '\\'
   ]
 
   const sRE = new RegExp(
@@ -22,7 +23,22 @@ const regExEscape = (text: string) => {
   return text.replace(sRE, '\\$1');
 }
 
-const buildPartialTextFilter = (filter: any, text: string) => {
+interface Range {
+  $gte?: number
+  $lte?: number
+}
+
+/** Build a mongo range condition, or undefined when neither bound is set. */
+export const rangeFilter = (from?: number, to?: number): Range | undefined => {
+  const range: Range = {}
+
+  if (from && from > 0) range.$gte = from
+  if (to && to > 0) range.$lte = to
+
+  return Object.keys(range).length > 0 ? range : undefined
+}
+
+export const buildPartialTextFilter = (filter: QueryFilter<IRoutes>, text: string) => {
   const words = text.split(" ").map(regExEscape).filter((x) => x !== '')
 
   const andClause = []
@@ -51,9 +67,8 @@ router.route('/routes').post(
     try {
       const searchOptions = req.body
 
-      // These are not typed by mongoose
-      const filter: any = {}
-      let options: any = null
+      const filter: QueryFilter<IRoutes> = {}
+      let options: QueryOptions<IRoutes> | undefined
 
       // Filter
       if (searchOptions.filter) {
@@ -71,44 +86,22 @@ router.route('/routes').post(
         }
 
         // Distance
-        if (srchFilter.distFrom && srchFilter.distFrom > 0) {
-          filter.distance = {
-            ...filter.distance,
-            $gte: srchFilter.distFrom
-          }
-        }
-
-        if (srchFilter.distTo && srchFilter.distTo > 0) {
-          filter.distance = {
-            ...filter.distance,
-            $lte: srchFilter.distTo
-          }
-        }
+        const distance = rangeFilter(srchFilter.distFrom, srchFilter.distTo)
+        if (distance) filter.distance = distance
 
         // Elevation
-        if (srchFilter.elevFrom && srchFilter.elevFrom > 0) {
-          filter.elevation_gain = {
-            ...filter.elevation_gain,
-            $gte: srchFilter.elevFrom
-          }
-        }
-
-        if (srchFilter.elevTo && srchFilter.elevTo > 0) {
-          filter.elevation_gain = {
-            ...filter.elevation_gain,
-            $lte: srchFilter.elevTo
-          }
-        }
+        const elevation = rangeFilter(srchFilter.elevFrom, srchFilter.elevTo)
+        if (elevation) filter.elevation_gain = elevation
       }
 
       // Projection
-      let projection = null
+      let projection: Record<string, 1> | null = null
 
       if (searchOptions.columns) {
         const columns = searchOptions.columns
 
         if (Array.isArray(columns)) {
-          projection = columns.reduce((acc, cur) => {
+          projection = columns.reduce((acc: Record<string, 1>, cur: string) => {
             acc[cur] = 1
             return acc
           }, {})
@@ -254,11 +247,10 @@ router.route('/routes/:id').post(
     }
 
     try {
-      await Routes.findOneAndUpdate({
+      await Routes.replaceOne({
         routeid: parseInt(id)
       }, doc, {
-        upsert: true,
-        overwrite: true
+        upsert: true
       }).exec()
 
       response.msgResponse(res, `Added / replaced route ${id}`)
@@ -283,11 +275,9 @@ router.route('/routes/:id').put(
     }
 
     try {
-      await Routes.findOneAndUpdate({
+      await Routes.replaceOne({
         routeid: parseInt(id)
-      }, doc, {
-        overwrite: true
-      }).exec()
+      }, doc).exec()
 
       response.msgResponse(res, `Replaced route ${id}`)
 
@@ -306,7 +296,7 @@ router.route('/routes/:id').delete(
     const id = req.params.id
 
     try {
-      await Routes.findOneAndRemove({
+      await Routes.findOneAndDelete({
         routeid: parseInt(id)
       }).exec()
 

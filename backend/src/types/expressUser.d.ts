@@ -1,11 +1,12 @@
-// eslint-disable-next-line no-unused-vars,@typescript-eslint/no-unused-vars
 import { IUser } from "../models/users"
 
 export {}
 
 declare global {
   namespace Express {
-      interface User extends IUser {
-      }
+    // Interface merging is how Express expects req.user to be typed, so the
+    // empty body is deliberate here.
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    interface User extends IUser {}
   }
 }

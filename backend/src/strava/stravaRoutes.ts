@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express'
+import express from 'express'
 import passport from 'passport'
 
 import response from '../response'
@@ -11,7 +11,7 @@ const router = express.Router()
 router.route('/strava/route/:id').get(
   passport.authenticate('jwt', { session: false }),
   checkPermission('modifyRoutes'),
-  async function (req: Request, res: Response) {
+  async function (req, res) {
     try {
       if (!req.user || !req.user.auth) {
         response.errorMsgResponse(res, 401, 'Invalid user')

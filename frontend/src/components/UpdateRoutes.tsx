@@ -9,9 +9,6 @@ import Permissions from '../Permissions'
 
 // Types
 
-interface IProps {
-}
-
 interface IState {
   loading: boolean
   error: null | string
@@ -21,13 +18,13 @@ interface IState {
 
 // Class definition
 
-export default class UpdateRoutes extends Component<IProps, IState> {
+export default class UpdateRoutes extends Component<object, IState> {
   static contextType: typeof StravaContext = StravaContext
-  context!: React.ContextType<typeof StravaContext>
+  declare context: React.ContextType<typeof StravaContext>
 
   routeService: RouteService
 
-  constructor(props: IProps) {
+  constructor(props: object) {
     super(props)
 
     this.state = {
@@ -85,7 +82,7 @@ export default class UpdateRoutes extends Component<IProps, IState> {
         return (
           <div className='row mt-2'>
             <div className='col'>
-              <span className='mr-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
+              <span className='me-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
               </div>
           </div>
         )
@@ -136,7 +133,7 @@ export default class UpdateRoutes extends Component<IProps, IState> {
                 onClick={this.checkAllRoutes}
               >
                 <FontAwesomeIcon icon={faCheckCircle} spin={false}/>
-                <span className='ml-2'>Check all</span>
+                <span className='ms-2'>Check all</span>
               </button>
             </td>
           </tr>

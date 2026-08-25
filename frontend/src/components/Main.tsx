@@ -1,5 +1,5 @@
 import { Component, ComponentType, ReactNode } from 'react'
-import { Switch, Route, withRouter, RouteComponentProps } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 
 import FilteredRoutes from './FilteredRoutes'
 import AddRoutes from './AddRoutes'
@@ -9,12 +9,13 @@ import Page from './Page'
 import NavLink from './NavLink'
 import StravaContext from './StravaContext'
 import Permissions from '../Permissions'
+import { withRouter, RouterProps } from './withRouter'
 
 // Class definition
 
-class Main extends Component<RouteComponentProps> {
+class Main extends Component<RouterProps> {
   static contextType: typeof StravaContext = StravaContext
-  context!: React.ContextType<typeof StravaContext>
+  declare context: React.ContextType<typeof StravaContext>
 
   render = () => {
     const { location } = this.props
@@ -27,13 +28,17 @@ class Main extends Component<RouteComponentProps> {
       const routes: ReactNode[] = []
       let haveLinks = false
 
-      const addRoute = (url: string, exact: boolean, Component: ComponentType) => {
+      // react-router 6+ matches the full path by default; a route that needs to
+      // match its descendants opts in with a trailing /*
+      const addRoute = (url: string, exact: boolean, RouteComponent: ComponentType) => {
+        const path = exact ? url : `${url.replace(/\/+$/, '')}/*`
+
         routes.push(
-          <Route key={url} path={url} component={Component} exact={exact}/>
+          <Route key={url} path={path} element={<RouteComponent/>}/>
         )
       }
 
-      const addNavUrl = (url: string, exact: boolean, desc: string, Component: ComponentType, atEnd: boolean = true) => {
+      const addNavUrl = (url: string, exact: boolean, desc: string, RouteComponent: ComponentType, atEnd: boolean = true) => {
         const method = (atEnd ? 'push' : 'unshift')
         const classes = ['nav-item']
 
@@ -48,7 +53,7 @@ class Main extends Component<RouteComponentProps> {
           </li>
         )
 
-        addRoute(url, exact, Component)
+        addRoute(url, exact, RouteComponent)
 
         haveLinks = true
       }
@@ -75,24 +80,24 @@ class Main extends Component<RouteComponentProps> {
       let avatar = null
 
       if (picMed.startsWith('http')) avatar = (
-        <ul className='navbar-nav ml-auto'>
+        <ul className='navbar-nav ms-auto'>
           <li key='avatar' className='nav-item'>
-            <img className='rounded-circle ml-1' height="40px" width="40px" src={picMed} alt={fullName}/>
+            <img className='rounded-circle ms-1' height="40px" width="40px" src={picMed} alt={fullName}/>
           </li>
         </ul>
       )
-      
+
       let navContent
 
       if (navItems.length > 0) {
         navContent = (
           <>
-            <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
               <span className="navbar-toggler-icon"/>
             </button>
 
             <div className='collapse navbar-collapse' id='navbarNav'>
-              <ul className='navbar-nav ml-auto'>
+              <ul className='navbar-nav ms-auto'>
                 {navItems}
               </ul>
             </div>
@@ -112,16 +117,16 @@ class Main extends Component<RouteComponentProps> {
 
       return (
         <Page navContent={navContent}>
-          <Switch>
+          <Routes>
             {routes}
-            <Route path='*'>
+            <Route path='*' element={
               <div className='row mt-2'>
                 <div className='col'>
                   Error - Page not found
                 </div>
               </div>
-            </Route>
-          </Switch>
+            }/>
+          </Routes>
         </Page>
       )
     }

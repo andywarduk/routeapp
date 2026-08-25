@@ -1,25 +1,26 @@
-import { Document, Schema, model } from 'mongoose'
+import { Schema, model, HydratedDocument } from 'mongoose'
+
+import { stripInternals } from './transform'
 
 export interface IStravaUser {
   id: number
   username: string
   firstname: string
-  lastname: string,
-  city: string,
-  state: string,
-  country: string,
-  sex: string,
-  created_at: string,
-  updated_at: string,
-  profile_medium: string,
+  lastname: string
+  city: string
+  state: string
+  country: string
+  sex: string
+  created_at: string
+  updated_at: string
+  profile_medium: string
   profile: string
 }
 
-export interface IStravaUserModel extends IStravaUser, Omit<Document, 'id'> {
-}
+export type IStravaUserDocument = HydratedDocument<IStravaUser>
 
 // Schema
-const StravaUser = new Schema({
+const StravaUser = new Schema<IStravaUser>({
   id: {
     type: Number,
     unique: true
@@ -41,14 +42,7 @@ const StravaUser = new Schema({
 })
 
 StravaUser.set('toJSON', {
-  transform: (_doc: any, ret: any) => {
-    delete ret._id
-    delete ret.__v
-  }
+  transform: (_doc, ret) => stripInternals(ret)
 })
 
-// Hack for type checking...
-interface IStravaUserModelHack extends Omit<IStravaUser, 'id'>, Document {
-}
-
-export default model<IStravaUserModelHack>('StravaUser', StravaUser)
+export default model<IStravaUser>('StravaUser', StravaUser)

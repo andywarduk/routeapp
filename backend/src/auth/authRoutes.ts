@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import response from '../response';
 import { checkPermission, permsDesc } from '../auth/permissions';
 import stravaOAuth from '../strava/stravaOAuth';
+import { config } from '../config';
 
 // User schemas
 import StravaUsers from '../models/stravaUsers';
@@ -19,18 +20,19 @@ const router = express.Router()
 router.route('/auth').post(async function (req, res) {
   try {
     // Do strava authentication
-    const data = await stravaOAuth.tokenExchange(req.body.clientId, req.body.token, process.env.STRAVA_CLIENT_SECRET || '')
+    const data = await stravaOAuth.tokenExchange(req.body.clientId, req.body.token, config.stravaClientSecret)
 
     // Set up strava user document
     let stravaUser = data.athlete
 
-    // Always overwrite strava user with the new document
-    stravaUser = await StravaUsers.findOneAndUpdate({
+    // Always overwrite strava user with the new document.
+    // findOneAndUpdate + overwrite:true was the mongoose 5 spelling of this;
+    // the overwrite option was removed in mongoose 7 and would now merge instead.
+    stravaUser = await StravaUsers.findOneAndReplace({
       id: stravaUser.id
     }, stravaUser, {
       upsert: true,
-      overwrite: true,
-      new: true
+      returnDocument: 'after'
     }).exec()
 
     // Load user
@@ -56,9 +58,9 @@ router.route('/auth').post(async function (req, res) {
       })
 
       // Make app owner an admin, all others get viewRoutes by default
-      const superAthlete = parseInt(process.env.SUPER_ATHLETE || '')
+      const { superAthlete } = config
 
-      if (!!superAthlete && stravaUser.id === superAthlete) {
+      if (superAthlete !== undefined && stravaUser.id === superAthlete) {
         user.perms.admin = true
       } else {
         user.perms.viewRoutes = true
@@ -97,8 +99,10 @@ router.route('/auth').post(async function (req, res) {
       athleteId: stravaUser.id
     }
 
-    const token = jwt.sign(jwtPayload, process.env.JWT_SECRET || '', {
-      issuer: 'corsham.cc'
+    const token = jwt.sign(jwtPayload, config.jwtSecret, {
+      issuer: config.jwtIssuer,
+      expiresIn: config.jwtExpiresIn,
+      algorithm: config.jwtAlgorithm
     })
 
     // Send back details

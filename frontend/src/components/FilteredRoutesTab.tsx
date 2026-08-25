@@ -13,12 +13,9 @@ interface IProps {
   error: string | null
 }
 
-interface IState {
-}
-
 // Class definition
 
-export default class FilteredRoutesTab extends Component<IProps, IState> {
+export default class FilteredRoutesTab extends Component<IProps> {
 
   switchTab = (evt: SyntheticEvent, newTab: FilteredRoutesView) => {
     const { tabSwitched } = this.props
@@ -31,13 +28,7 @@ export default class FilteredRoutesTab extends Component<IProps, IState> {
   addTabItem = (tabItems: ReactElement[], type: FilteredRoutesView, desc: string) => {
     const { view } = this.props
 
-    let classes = null
-
-    if (type === view) {
-      classes = 'nav-link active'
-    } else {
-      classes = 'nav-link'
-    }
+    const classes = (type === view ? 'nav-link active' : 'nav-link')
 
     tabItems.push(
       <li key={type} className='nav-item'>
@@ -77,11 +68,11 @@ export default class FilteredRoutesTab extends Component<IProps, IState> {
     let spinnerSpan = null
 
     if (spinner) {
-      spinnerSpan = <span className='mr-2'>{spinner}</span>
+      spinnerSpan = <span className='me-2'>{spinner}</span>
     }
 
     tabItems.push(
-      <li key={-1} className='nav-item ml-auto'>
+      <li key={-1} className='nav-item ms-auto'>
         <span className='nav-link disabled'>
           {spinnerSpan}
           <span>{count}</span>

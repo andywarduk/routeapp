@@ -4,7 +4,8 @@ import { faSyncAlt, faExclamationTriangle, faCheck } from '@fortawesome/free-sol
 
 import StravaContext from './StravaContext'
 import StravaService, { IStravaRoute } from '../StravaService'
-import RouteService, { IRoute } from '../RouteService'
+import RouteService from '../RouteService'
+import { toError } from '../Service'
 
 // Types
 
@@ -17,7 +18,7 @@ enum EStatus {
 }
 
 interface IProps {
-  route: IRoute
+  route: { routeid: number }
   finishNotify: (routeid: number) => void
 }
 
@@ -31,7 +32,7 @@ interface IState {
 
 export default class AddRoutesRow extends Component<IProps, IState> {
   static contextType: typeof StravaContext = StravaContext
-  context!: React.ContextType<typeof StravaContext>
+  declare context: React.ContextType<typeof StravaContext>
 
   stravaService: StravaService
   routeService: RouteService
@@ -81,7 +82,7 @@ export default class AddRoutesRow extends Component<IProps, IState> {
     } catch(err) {
       this.setState({
         status: EStatus.STATUS_ERRORED,
-        desc: err.toString()
+        desc: toError(err).toString()
       })
       finishNotify(route.routeid)
 
@@ -120,7 +121,7 @@ export default class AddRoutesRow extends Component<IProps, IState> {
     } catch(err) {
       this.setState({
         status: EStatus.STATUS_ERRORED,
-        desc: err.toString()
+        desc: toError(err).toString()
       })
       finishNotify(route.routeid)
 
@@ -164,7 +165,7 @@ export default class AddRoutesRow extends Component<IProps, IState> {
 
     const classes = [
       'badge',
-      `badge-${colour}`,
+      `bg-${colour}`,
       'btn-sm',
       'text-nowrap'
     ]
@@ -179,7 +180,7 @@ export default class AddRoutesRow extends Component<IProps, IState> {
         style={badgeStyle}
       >
         {icon}
-        <span className='ml-2'>{desc}</span>
+        <span className='ms-2'>{desc}</span>
       </span>
     )
 

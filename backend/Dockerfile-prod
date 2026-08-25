@@ -1,43 +1,36 @@
-# Build environment
-FROM node:latest as buildenv
-
-WORKDIR /app
-
-COPY package.json ./
-
-RUN npm install
-
-
 # Build
-FROM buildenv as build
+FROM node:24-alpine AS build
 
 WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
-
 RUN npm run build
 
 
-# Production environment
-FROM node:latest as prodenv
-
-WORKDIR /app
-
-COPY package.json ./
-
-RUN npm install --only=production
-
-
 # Production
-FROM prodenv
+FROM node:24-alpine
 
 WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/build ./build
-COPY --from=build /app/.env ./
+
+# Configuration is supplied at runtime (compose env_file), never baked into an
+# image layer - the .env used to be COPYed in here alongside the build output.
 
 EXPOSE 6200
 
-ENV NODE_ENV production
+# Drop root
+USER node
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:6200/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 CMD [ "npm", "start" ]

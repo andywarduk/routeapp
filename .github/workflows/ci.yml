@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  check:
+    name: ${{ matrix.package }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [backend, frontend]
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.package }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  images:
+    name: docker images
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The frontend build inlines VITE_* values, so give it placeholders -
+      # this job only proves the images build, it does not deploy them.
+      - name: Frontend build env
+        run: |
+          printf 'VITE_STRAVA_CLIENT_ID=0\nVITE_MAP_CENTRE=51.43,-2.19\n' > frontend/.env
+
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile-prod -t routeapp-backend:ci backend
+
+      - name: Build frontend image
+        run: docker build -f frontend/Dockerfile-prod -t routeapp-frontend:ci frontend
+
+      - name: Validate compose files
+        run: |
+          docker compose -f docker-compose-dev.yml config -q
+          docker compose -f docker-compose-prod.yml config -q

@@ -14,9 +14,6 @@ interface IRoute {
   processed: boolean
 }
 
-interface IProps {
-}
-
 interface IState {
   status: EStatus
   routeList: string
@@ -25,9 +22,9 @@ interface IState {
 
 // Class definition
 
-export default class AddRoutes extends Component<IProps, IState> {
+export default class AddRoutes extends Component<object, IState> {
 
-  constructor(props: IProps) {
+  constructor(props: object) {
     super(props)
 
     this.state = {
@@ -67,7 +64,7 @@ export default class AddRoutes extends Component<IProps, IState> {
     return (
       <>
         <form className='mt-2'>
-          <div className="form-group">
+          <div className="mb-3">
             <label htmlFor="routeList">Enter list of route IDs or strava route URLs:</label>
             <textarea
               className="form-control"
@@ -78,7 +75,7 @@ export default class AddRoutes extends Component<IProps, IState> {
               disabled={status !== EStatus.STATE_INPUT}
             />
           </div>
-          <div className="form-group">
+          <div className="mb-3">
             <button
               type='submit'
               className='btn btn-primary'

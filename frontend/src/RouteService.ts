@@ -23,9 +23,20 @@ export interface IRouteSearchOptions {
   filter?: IRouteSearchFilter
 }
 
+/*
+ * The route documents are stored with `strict: false`, so they carry more
+ * fields than this. These are the ones the UI reads; the index signature keeps
+ * the rest reachable without weakening them to `any`.
+ */
 export interface IRoute {
-  // TODO
-  [propName: string]: any
+  routeid: number
+  name: string
+  description: string
+  distance: number
+  elevation_gain: number
+  estimated_moving_time: number
+  updated_at?: string
+  [propName: string]: unknown
 }
 
 // Route service class

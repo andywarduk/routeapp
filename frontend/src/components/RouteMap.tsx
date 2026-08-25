@@ -1,5 +1,5 @@
-import { Component, CSSProperties } from 'react'
-import { Map, MapProps, TileLayer, Polyline, Popup, LayersControl } from 'react-leaflet'
+import { Component, CSSProperties, useEffect } from 'react'
+import { MapContainer, TileLayer, Polyline, Popup, LayersControl, useMap } from 'react-leaflet'
 import { LatLngBounds, LatLngTuple } from 'leaflet'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
@@ -39,16 +39,35 @@ interface IPolyLine {
   polyLine: null | LatLngTuple[]
 }
 
+/*
+ * react-leaflet 3+ only reads MapContainer props at mount, so a changing
+ * bounding box has to be applied through the map instance instead.
+ */
+const FitBounds = ({ bounds }: { bounds: LatLngBounds }) => {
+  const map = useMap()
+
+  // boundingBox() builds a new LatLngBounds every render, so depend on its
+  // value rather than its identity - otherwise the effect refires forever
+  const box = bounds.toBBoxString()
+
+  useEffect(() => {
+    map.fitBounds(bounds)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, box])
+
+  return null
+}
+
 // Class definition
 
 export default class RouteMap extends Component<IProps, IState> {
   static contextType: typeof StravaContext = StravaContext
-  context!: React.ContextType<typeof StravaContext>
+  declare context: React.ContextType<typeof StravaContext>
 
   constructor(props: IProps) {
     super(props)
 
-    const mapCentreEnv = (process.env.REACT_APP_MAP_CENTRE || '').split(',').map(parseFloat)
+    const mapCentreEnv = (import.meta.env.VITE_MAP_CENTRE || '').split(',').map(parseFloat)
 
     let mapCentre: LatLngTuple
 
@@ -164,12 +183,12 @@ export default class RouteMap extends Component<IProps, IState> {
 
       try {
         pl.polyLine  = await p
-      } catch(err) {
+      } catch {
         pl.polyLine = null
       }
     }
 
-    let minMax: MinMax = this.defaultMinMax(mapCentre)
+    const minMax: MinMax = this.defaultMinMax(mapCentre)
 
     // Calculate bounding box
     for (const pl of polyLines) {
@@ -207,15 +226,11 @@ export default class RouteMap extends Component<IProps, IState> {
   render = () => {
     const { polyLines, loading, maxDist, minDist } = this.state
 
-    const mapProps: Partial<MapProps> = {
-      scrollWheelZoom: false
-    }
-
     this.routesChanged()
 
     const distRange = maxDist - minDist
 
-    const mapPolyLines = polyLines.reduce((arr: JSX.Element[], p, i) => {
+    const mapPolyLines = polyLines.reduce((arr: React.JSX.Element[], p, i) => {
       if (p.polyLine) {
         const distRatio = (distRange === 0 ? 1 : ((p.distance - minDist) / distRange)) * 512
 
@@ -231,24 +246,24 @@ export default class RouteMap extends Component<IProps, IState> {
               <table style={{'margin': 'auto'}}>
                 <tbody>
                   <tr>
-                    <td className='pr-1 text-right'>
+                    <td className='pe-1 text-end'>
                       <Distance m={p.distance} unit='mi' dp={1} showUnit={false}/>
                     </td>
-                    <td className='pr-1'>mi</td>
-                    <td className='pl-1 pr-1 text-right'>
+                    <td className='pe-1'>mi</td>
+                    <td className='ps-1 pe-1 text-end'>
                       <Distance m={p.elevation_gain} unit='ft' dp={0} showUnit={false}/>
                     </td>
-                    <td className='pr-1'>ft</td>
+                    <td className='pe-1'>ft</td>
                   </tr>
                   <tr>
-                    <td className='pr-1 text-right'>
+                    <td className='pe-1 text-end'>
                       <Distance m={p.distance} unit='km' dp={1} showUnit={false}/>
                     </td>
-                    <td className='pr-1'>km</td>
-                    <td className='pr-1 pr-1 text-right'>
+                    <td className='pe-1'>km</td>
+                    <td className='pe-1 text-end'>
                       <Distance m={p.elevation_gain} unit='m' dp={0} showUnit={false}/>
                     </td>
-                    <td className='pr-1'>m</td>
+                    <td className='pe-1'>m</td>
                   </tr>
                 </tbody>
               </table>
@@ -260,7 +275,7 @@ export default class RouteMap extends Component<IProps, IState> {
       return arr
     }, [])
 
-    mapProps.bounds = this.boundingBox()
+    const bounds = this.boundingBox()
 
     let loadingMsg = null
 
@@ -271,8 +286,8 @@ export default class RouteMap extends Component<IProps, IState> {
       loadingMsg = (
         <div style={outerDivStyle}>
           <div style={innerDivStyle}>
-            <span className='badge badge-secondary mt-2 py-2 px-2'>
-              <span className='mr-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
+            <span className='badge bg-secondary mt-2 py-2 px-2'>
+              <span className='me-2'>Loading...</span><FontAwesomeIcon icon={faSpinner} spin={true}/>
             </span>
           </div>
         </div>
@@ -282,7 +297,13 @@ export default class RouteMap extends Component<IProps, IState> {
     return (
       <div>
         {loadingMsg}
-        <Map style={{'height': '100vw', 'maxHeight': '100vh'}} {...mapProps}>
+        <MapContainer
+          style={{'height': '100vw', 'maxHeight': '100vh'}}
+          scrollWheelZoom={false}
+          bounds={bounds}
+        >
+          <FitBounds bounds={bounds}/>
+
           <LayersControl position="topright">
 
             <LayersControl.BaseLayer name="OpenStreetMap" checked={true}>
@@ -322,7 +343,7 @@ export default class RouteMap extends Component<IProps, IState> {
 
           </LayersControl>
           {mapPolyLines}
-        </Map>
+        </MapContainer>
       </div>
     )
   }

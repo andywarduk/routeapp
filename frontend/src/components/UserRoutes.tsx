@@ -1,22 +1,21 @@
 import { Component } from 'react'
-import { Switch, Route, withRouter, RouteComponentProps } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 
 import Users from './Users'
 import UserDetail from './UserDetail'
 
-class UserRoutes extends Component<RouteComponentProps> {
+/*
+ * Mounted by Main under /users/*, so these paths are relative to that.
+ */
+export default class UserRoutes extends Component {
 
   render() {
-    const { match } = this.props
-
     return (
-      <Switch>
-        <Route path={`${match.path}/`} component={Users} exact/>
-        <Route path={`${match.path}/:userId`} component={UserDetail} exact/>
-      </Switch>
+      <Routes>
+        <Route path='/' element={<Users/>}/>
+        <Route path=':userId' element={<UserDetail/>}/>
+      </Routes>
     )
   }
 
 }
-
-export default withRouter(UserRoutes)

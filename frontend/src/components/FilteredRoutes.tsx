@@ -16,9 +16,6 @@ export enum FilteredRoutesView {
   VIEW_MAP = 2
 }
 
-interface IProps {
-}
-
 interface IState {
   loading: number
   request: number
@@ -33,15 +30,15 @@ interface IState {
 
 // Class definition
 
-export default class FilteredRoutes extends Component<IProps, IState> {
+export default class FilteredRoutes extends Component<object, IState> {
   static contextType: typeof StravaContext = StravaContext
-  context!: React.ContextType<typeof StravaContext>
+  declare context: React.ContextType<typeof StravaContext>
 
   static debounceTime = 400 // 0.4 second debounce
 
   routeService: RouteService
 
-  constructor(props: IProps) {
+  constructor(props: object) {
     super(props)
 
     // Initial state

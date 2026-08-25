@@ -1,8 +1,6 @@
-version: '2'
-
 services:
   mongodb-dev:
-    image: "mongo"
+    image: "mongo:8"
     ports:
       - "27017:27017"
     env_file:
@@ -10,11 +8,17 @@ services:
     volumes:
       - data-db-dev:/data/db
       - data-configdb-dev:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
     networks:
       - dev_default
- 
+
   backend-dev:
-    build: 
+    build:
       context: ./backend/
       dockerfile: Dockerfile-dev
     ports:
@@ -23,13 +27,16 @@ services:
       - ./backend:/app
       - /app/node_modules
       - /app/build
+    env_file:
+      - "./backend/.env"
     depends_on:
-      - mongodb-dev
+      mongodb-dev:
+        condition: service_healthy
     networks:
       - dev_default
-  
+
   frontend-dev:
-    build: 
+    build:
       context: ./frontend/
       dockerfile: Dockerfile-dev
     ports:
@@ -41,7 +48,7 @@ services:
       - backend-dev
     networks:
       - dev_default
-  
+
 volumes:
   data-db-dev:
   data-configdb-dev:

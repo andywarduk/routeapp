@@ -2,6 +2,7 @@ import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt'
 
 import stravaOAuth from '../strava/stravaOAuth';
+import { config } from '../config';
 
 // User schema
 import Users from '../models/users';
@@ -10,8 +11,10 @@ export default () => {
 
   passport.use(new JwtStrategy({
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET,
-    issuer: 'corsham.cc'
+    secretOrKey: config.jwtSecret,
+    issuer: config.jwtIssuer,
+    // Pin the algorithm so a token cannot pick a weaker one
+    algorithms: [config.jwtAlgorithm]
   }, async (jwt_payload, done) => {
     // Try and load the user details
     try {
@@ -31,8 +34,8 @@ export default () => {
         const secsLeft = auth.expires_at - Math.floor(new Date().getTime() / 1000)
 
         if (secsLeft <= 0) {
-          const newAuth = await stravaOAuth.refreshToken(process.env.STRAVA_CLIENT_ID || '',
-            process.env.STRAVA_CLIENT_SECRET || '', auth.refresh_token)
+          const newAuth = await stravaOAuth.refreshToken(config.stravaClientId,
+            config.stravaClientSecret, auth.refresh_token)
 
           auth.set({
             access_token: newAuth.access_token,
