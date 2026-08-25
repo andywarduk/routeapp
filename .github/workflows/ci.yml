@@ -51,11 +51,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The frontend build inlines VITE_* values, so give it placeholders -
-      # this job only proves the images build, it does not deploy them.
-      - name: Frontend build env
+      # Both .env files are gitignored, so CI has to synthesise them. The
+      # frontend build inlines VITE_* values at build time, and both compose
+      # files reference backend/.env via env_file, which `config` resolves.
+      # Placeholders only - this job proves the images build, it deploys nothing.
+      - name: Placeholder env files
         run: |
           printf 'VITE_STRAVA_CLIENT_ID=0\nVITE_MAP_CENTRE=51.43,-2.19\n' > frontend/.env
+          printf 'STRAVA_CLIENT_ID=0\nSTRAVA_CLIENT_SECRET=ci\nJWT_SECRET=ci\nMONGO_INITDB_ROOT_USERNAME=ci\nMONGO_INITDB_ROOT_PASSWORD=ci\n' > backend/.env
 
       - name: Build backend image
         run: docker build -f backend/Dockerfile-prod -t routeapp-backend:ci backend
