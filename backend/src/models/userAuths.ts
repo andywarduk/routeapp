@@ -1,18 +1,19 @@
-import { Document, Schema, model } from 'mongoose'
+import { Schema, Types, model, HydratedDocument } from 'mongoose'
+
+import { stripInternals } from './transform'
 
 export interface IUserAuth {
-  user: string
+  user: Types.ObjectId
   access_token: string
   refresh_token: string
   expires_at: number
   expires_in: number
 }
 
-export interface IUserAuthModel extends IUserAuth, Document {
-}
+export type IUserAuthDocument = HydratedDocument<IUserAuth>
 
 // Schema
-const UserAuths = new Schema({
+const UserAuths = new Schema<IUserAuth>({
   user: {
     type: Schema.Types.ObjectId,
     ref: 'Users'
@@ -24,13 +25,14 @@ const UserAuths = new Schema({
 })
 
 UserAuths.set('toJSON', {
-  transform: (_doc: any, ret: any) => {
-    delete ret._id
-    delete ret.__v
+  transform: (_doc, ret) => {
+    const out = stripInternals(ret)
 
-    ret.access_token = 'xxxx'
-    ret.refresh_token = 'xxxx'
+    out.access_token = 'xxxx'
+    out.refresh_token = 'xxxx'
+
+    return out
   }
 })
 
-export default model<IUserAuthModel>('UserAuths', UserAuths)
+export default model<IUserAuth>('UserAuths', UserAuths)

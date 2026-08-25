@@ -1,5 +1,16 @@
 import { Response } from "express"
 
+import { isProduction } from "./config"
+
+/** Pull an upstream HTTP status off an axios-style error, if there is one. */
+const upstreamStatus = (err: unknown): number | undefined => {
+  if (typeof err !== 'object' || err === null) return undefined
+
+  const { response } = err as { response?: { status?: number } }
+
+  return response?.status
+}
+
 export default {
 
   msgResponse: (res: Response, message: string) => {
@@ -16,22 +27,16 @@ export default {
     })
   },
 
-  errorResponse: (res: Response, err: Error | any) => {
-    let code = 500
-
-    if (process.env.NODE_ENV != 'production') {
-      console.log(err)
+  errorResponse: (res: Response, err: unknown) => {
+    if (isProduction) {
+      console.log(String(err))
     } else {
-      console.log(err.toString())
+      console.log(err)
     }
 
-    if (err.response && err.response.status) {
-      code = err.response.status
-    }
-
-    res.status(code).json({
+    res.status(upstreamStatus(err) ?? 500).json({
       ok: false,
-      message: err.toString()
+      message: String(err)
     })
   }
 

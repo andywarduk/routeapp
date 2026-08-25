@@ -1,9 +1,8 @@
 import express from 'express'
 import mongoose from 'mongoose'
-import bodyParser from 'body-parser'
 import cors from 'cors'
-import dotenv from 'dotenv'
 
+import config, { mongoUri } from './src/config'
 import setupJwtAuth from './src/auth/jwtAuth'
 
   // Routes and backend functions
@@ -12,57 +11,20 @@ import authRoutes from './src/auth/authRoutes'
 import stravaRoutes from './src/strava/stravaRoutes'
 import usersRoutes from './src/users/usersRoutes'
 
-main()
+const basePath = '/api'
+const connectRetries = 20
+const connectRetryDelay = 5000
+
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
 
 async function main()
 {
-  // Load env
-  dotenv.config()
-
-  // Server configuration
-  const basePath = '/api'
-  const port = 6200
-
-  // Connect to DB
-  let connected = false
-  let connTry = 0
-
-  let dbHost
-
-  // Set up mongoose
-  mongoose.set('useNewUrlParser', true);
-  mongoose.set('useFindAndModify', false);
-  mongoose.set('useCreateIndex', true);
-  mongoose.set('useUnifiedTopology', true);
-
-  if (process.env.NODE_ENV != 'production') {
-    dbHost = 'mongodb-dev'
-  } else {
-    dbHost = 'mongodb-prod'
-  }
-
-  // Build user name + password string
-  let dbUserPwd = ''
-
-  if (process.env.MONGO_INITDB_ROOT_USERNAME && process.env.MONGO_INITDB_ROOT_USERNAME !== '') {
-    if (process.env.MONGO_INITDB_ROOT_PASSWORD && process.env.MONGO_INITDB_ROOT_PASSWORD !== '') {
-      dbUserPwd = `${process.env.MONGO_INITDB_ROOT_USERNAME}:${process.env.MONGO_INITDB_ROOT_PASSWORD}@`
-    } else {
-      dbUserPwd = `${process.env.MONGO_INITDB_ROOT_USERNAME}@`
-    }
-  }
-
-  while(!connected && ++connTry <= 20) {
-    try{
-      await mongoose.connect(`mongodb://${dbUserPwd}${dbHost}/routes?authSource=admin`)
-      connected = true
-    } catch(err) {
-      console.error("Failed to connect to database", err)
-      await delay(5000)
-    }
-  }
-
-  if (!connected) throw new Error('Failed to connect to the database')
+  // Connect to DB. Mongoose 6+ dropped useNewUrlParser / useUnifiedTopology /
+  // useCreateIndex / useFindAndModify - the old behaviour is now the only one.
+  await connectToDatabase()
 
   // Set up jwt auth
   setupJwtAuth()
@@ -71,7 +33,7 @@ async function main()
   const app = express()
   app.use(express.static('public'))
   app.use(cors())
-  app.use(bodyParser.json({
+  app.use(express.json({
     limit: '4096kb'
   }))
 
@@ -81,15 +43,30 @@ async function main()
   app.use(basePath, usersRoutes)
 
   // Execute App
-  app.listen(port, () => {
-    console.log(`Routes backend running on port ${port} (${process.env.NODE_ENV})`)
+  app.listen(config.port, () => {
+    console.log(`Routes backend running on port ${config.port} (${config.nodeEnv})`)
   })
 }
 
-function delay(ms: number){
-  const p = new Promise(function (resolve) {
-      setTimeout(resolve, ms)
-  })
+async function connectToDatabase()
+{
+  const uri = mongoUri()
 
-  return p
+  for (let attempt = 1; attempt <= connectRetries; attempt++) {
+    try {
+      await mongoose.connect(uri)
+      return
+    } catch (err) {
+      console.error(`Failed to connect to database (attempt ${attempt}/${connectRetries})`, err)
+
+      if (attempt < connectRetries) await delay(connectRetryDelay)
+    }
+  }
+
+  throw new Error('Failed to connect to the database')
+}
+
+function delay(ms: number)
+{
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }

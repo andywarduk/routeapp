@@ -1,6 +1,6 @@
 services:
   mongodb-dev:
-    image: "mongo:5.0"
+    image: "mongo:8"
     ports:
       - "27017:27017"
     env_file:

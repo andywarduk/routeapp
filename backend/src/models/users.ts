@@ -1,21 +1,26 @@
-import { Document, Schema, model } from 'mongoose'
+import { Schema, model, HydratedDocument } from 'mongoose'
 
-import { IUserAuthModel } from './userAuths'
-import { IPermsModel } from './userPerms'
-import { IStravaUserModel } from './stravaUsers'
+import { stripInternals } from './transform'
 
+import { IUserAuthDocument } from './userAuths'
+import { IPermsDocument } from './userPerms'
+import { IStravaUserDocument } from './stravaUsers'
+
+/*
+ * stravaUser/perms/auth are ObjectId references. Every read path in the app
+ * populates them before use, so they are typed as the populated documents.
+ */
 export interface IUser {
   athleteid: number
-  stravaUser: IStravaUserModel
-  perms: IPermsModel
-  auth: IUserAuthModel
+  stravaUser: IStravaUserDocument
+  perms: IPermsDocument
+  auth: IUserAuthDocument
 }
 
-export interface IUserModel extends IUser, Document {
-}
+export type IUserDocument = HydratedDocument<IUser>
 
 // Schema
-const Users = new Schema({
+const Users = new Schema<IUser>({
   athleteid: {
     type: Number,
     unique: true
@@ -35,10 +40,7 @@ const Users = new Schema({
 })
 
 Users.set('toJSON', {
-  transform: (_doc: any, ret: any) => {
-    delete ret._id
-    delete ret.__v
-  }
+  transform: (_doc, ret) => stripInternals(ret)
 })
 
-export default model<IUserModel>('Users', Users)
+export default model<IUser>('Users', Users)

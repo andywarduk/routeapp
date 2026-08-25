@@ -1,4 +1,6 @@
-import { Document, Schema, model } from 'mongoose'
+import { Schema, model, HydratedDocument } from 'mongoose'
+
+import { stripInternals } from './transform'
 
 export interface IRoutes {
   routeid: number
@@ -14,11 +16,10 @@ export interface IRoutes {
   }
 }
 
-export interface IRoutesModel extends IRoutes, Omit<Document, 'id'> {
-}
+export type IRoutesDocument = HydratedDocument<IRoutes>
 
 // Schema
-const Routes = new Schema({
+const Routes = new Schema<IRoutes>({
   routeid: {
     type: Number,
     unique: true
@@ -43,14 +44,7 @@ Routes.index({
 })
 
 Routes.set('toJSON', {
-  transform: (_doc: any, ret: any) => {
-    delete ret._id
-    delete ret.__v
-  }
+  transform: (_doc, ret) => stripInternals(ret)
 })
 
-// Hack for type checking...
-interface IRoutesModelHack extends Omit<IRoutes, 'id'>, Document {
-}
-
-export default model<IRoutesModelHack>('Routes', Routes)
+export default model<IRoutes>('Routes', Routes)
