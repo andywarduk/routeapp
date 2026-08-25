@@ -18,6 +18,11 @@ frontend/.env, then fill in the values.
 
 Use docker-compose-prod.yml for production. Add --pull to refresh base images.
 
+Podman works as a drop-in - substitute "podman compose" for "docker compose".
+It needs a running machine first:
+
+  podman machine start
+
 Local development without Docker
 --------------------------------
 
