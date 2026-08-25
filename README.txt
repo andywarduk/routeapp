@@ -24,7 +24,8 @@ Local development without Docker
   cd backend  && npm ci && BACKEND_URL=http://localhost:6200 npm run watch
   cd frontend && npm ci && BACKEND_URL=http://localhost:6200 npm run dev
 
-Requires Node 22 or later.
+Requires Node 24 (the active LTS line). Node 22 enters end-of-life in April
+2027 and is already security-fixes-only.
 
 Checks
 ------
