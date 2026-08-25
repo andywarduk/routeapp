@@ -1,4 +1,4 @@
-import { Component } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faKeyboard } from '@fortawesome/free-solid-svg-icons'
 
@@ -16,77 +16,46 @@ export enum FilteredRoutesView {
   VIEW_MAP = 2
 }
 
-interface IState {
-  loading: number
-  request: number
-  routes: IRoute[],
-  error: string | null
-  sortCol: string
-  sortAsc: boolean
-  filter: IRouteSearchFilter,
-  view: FilteredRoutesView,
-  debounceTimer: NodeJS.Timeout | null
-}
+// Service
 
-// Class definition
+const routeService = new RouteService()
 
-export default class FilteredRoutes extends Component<object, IState> {
-  static contextType: typeof StravaContext = StravaContext
-  declare context: React.ContextType<typeof StravaContext>
+const debounceTime = 400 // 0.4 second debounce
 
-  static debounceTime = 400 // 0.4 second debounce
+// Component
 
-  routeService: RouteService
+export default function FilteredRoutes() {
+  const { auth } = useContext(StravaContext)
 
-  constructor(props: object) {
-    super(props)
+  const [loading, setLoading] = useState(0)
+  const [routes, setRoutes] = useState<IRoute[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [sortCol, setSortCol] = useState('name')
+  const [sortAsc, setSortAsc] = useState(true)
+  const [filter, setFilter] = useState<IRouteSearchFilter>({})
+  const [view, setView] = useState(FilteredRoutesView.VIEW_TABLE)
+  const [debouncing, setDebouncing] = useState(false)
 
-    // Initial state
-    this.state = {
-      loading: 0,
-      request: 0,
-      routes: [],
-      error: null,
-      sortCol: 'name',
-      sortAsc: true,
-      filter: {},
-      view: FilteredRoutesView.VIEW_TABLE,
-      debounceTimer: null
-    }
+  // Request number of the most recently issued search, so that results
+  // arriving out of order can be discarded
+  const request = useRef(0)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    // Create route service
-    this.routeService = new RouteService()
-  }
+  const jwt = auth ? auth.jwt : null
 
-  componentDidMount = () => {
-    // Initial data request
-    this.requestData({
-      ...this.state
-    })
-  }
+  // Search whenever the sort order or the applied filter changes, and on mount
+  useEffect(() => {
+    if (!jwt) return
 
-  requestData = async (newState: Partial<IState>) => {
-    const { auth } = this.context
-
-    if (auth) {
-      const { jwt } = auth
-
+    const requestData = async () => {
       // Allocate request number
-      const requestNo = this.state.request + 1
+      const requestNo = request.current + 1
+      request.current = requestNo
 
-      // Build full state for search
-      const srchState = {
-        ...this.state,
-        ...newState,
-        loading: this.state.loading + 1,
-        request: requestNo
-      }
-
-      // Set state
-      this.setState(srchState)
+      setLoading((l) => l + 1)
 
       // Make request
-      const res = await this.routeService.search(jwt, {
+      const res = await routeService.search(jwt, {
         columns: [
           'routeid',
           'name',
@@ -96,148 +65,121 @@ export default class FilteredRoutes extends Component<object, IState> {
           'estimated_moving_time'
         ],
         sort: {
-          column: srchState.sortCol,
-          ascending: srchState.sortAsc
+          column: sortCol,
+          ascending: sortAsc
         },
-        filter: srchState.filter
+        filter
       })
 
-      // Process results
-      let nextState: Partial<IState>
-
-      if (requestNo >= this.state.request) {
+      // Process results, ignoring any superseded by a later request
+      if (requestNo >= request.current) {
         if (res.ok) {
-          nextState = {
-            routes: res.data,
-            error: null,
-            loading: Math.max(0, this.state.loading - 1)
-          }
+          setRoutes(res.data)
+          setError(null)
 
         } else {
-          nextState = {
-            routes: [],
-            error: res.data.toString(),
-            loading: Math.max(0, this.state.loading - 1)
-          }
+          setRoutes([])
+          setError(res.data.toString())
 
         }
-
-      } else {
-        nextState = {
-          loading: Math.max(0, this.state.loading - 1)
-        }
-
       }
 
-      this.setState({
-        ...this.state,
-        ...nextState
-      })
-
+      setLoading((l) => Math.max(0, l - 1))
     }
 
-  }
+    requestData()
+  }, [jwt, sortCol, sortAsc, filter])
 
-  sort = (col: string) => {
-    const { sortCol, sortAsc } = this.state
+  // Drop any outstanding debounce when unmounting
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+  }, [])
 
+  const sort = useCallback((col: string) => {
     if (col === sortCol) {
       // Same column - reverse order
-      this.requestData({
-        sortAsc: !sortAsc
-      })
+      setSortAsc(!sortAsc)
     } else {
       // New column
-      this.requestData({
-        sortCol: col,
-        sortAsc: true
-      })
+      setSortCol(col)
+      setSortAsc(true)
     }
-  }
+  }, [sortCol, sortAsc])
 
-  tabSwitched = (newTab: FilteredRoutesView) => {
-    this.setState({
-      view: newTab
-    })
-  }
-
-  filterChanged = (filter: IRouteSearchFilter, debounce: boolean) => {
-    const { debounceTimer } = this.state
-
-    if (debounceTimer) {
-      clearTimeout(debounceTimer)
+  const filterChanged = useCallback((newFilter: IRouteSearchFilter, debounce: boolean) => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current)
+      debounceTimer.current = null
     }
 
     if (debounce) {
       // Debounced request
-      this.setState({
-        debounceTimer: setTimeout(() => {
-          this.filterChanged(filter, false)
-        }, FilteredRoutes.debounceTime),
-        filter
-      })
+      setDebouncing(true)
+
+      debounceTimer.current = setTimeout(() => {
+        debounceTimer.current = null
+        setDebouncing(false)
+        setFilter(newFilter)
+      }, debounceTime)
+
     } else {
       // Immediate request
-      this.requestData({
-        debounceTimer: null,
-        filter
-      })
+      setDebouncing(false)
+      setFilter(newFilter)
+
     }
+  }, [])
+
+  let content = null
+
+  // Calculate spinner
+  let spinner = null
+
+  if (loading > 0) {
+    spinner = <FontAwesomeIcon icon={faSpinner} spin={true}/>
+  } else if (debouncing) {
+    spinner = <FontAwesomeIcon icon={faKeyboard}/>
   }
 
-  render = () => {
-    const { routes, loading, error, sortCol, sortAsc, debounceTimer, view } = this.state
-
-    let content = null 
-
-    // Calculate spinner
-    let spinner = null
-
-    if (loading > 0) {
-      spinner = <FontAwesomeIcon icon={faSpinner} spin={true}/>
-    } else if (debounceTimer) {
-      spinner = <FontAwesomeIcon icon={faKeyboard}/>
+  // Generate content for the current view
+  switch (view) {
+  case FilteredRoutesView.VIEW_TABLE:
+    if (routes.length > 0) {
+      content = <RouteTable
+        routes={routes}
+        sortCol={sortCol}
+        sortAsc={sortAsc}
+        sortCb={sort}
+      />
     }
 
-    // Generate content for the current view
-    switch (view) {
-    case FilteredRoutesView.VIEW_TABLE:
-      if (routes.length > 0) {
-        content = <RouteTable
-          routes={routes}
-          sortCol={sortCol}
-          sortAsc={sortAsc}
-          sortCb={this.sort}
-        />
-      }
+    break
 
-      break
-
-    case FilteredRoutesView.VIEW_MAP:
-      content = (
-        <RouteMap routes={routes}/>
-      )
-
-      break
-
-    default:
-      break
-
-    }
-
-    return (
-      <>
-        <Filter filterCb={this.filterChanged}/>
-        <FilteredRoutesTab
-          view={view}
-          routes={routes}
-          error={error}
-          spinner={spinner}
-          tabSwitched={this.tabSwitched}
-        />
-        {content}
-      </>
+  case FilteredRoutesView.VIEW_MAP:
+    content = (
+      <RouteMap routes={routes}/>
     )
+
+    break
+
+  default:
+    break
+
   }
 
+  return (
+    <>
+      <Filter filterCb={filterChanged}/>
+      <FilteredRoutesTab
+        view={view}
+        routes={routes}
+        error={error}
+        spinner={spinner}
+        tabSwitched={setView}
+      />
+      {content}
+    </>
+  )
 }

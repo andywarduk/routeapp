@@ -1,11 +1,10 @@
-import { Component } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheckCircle, faSyncAlt, faSave, faExclamationTriangle, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons'
 
 import StravaContext from './StravaContext'
 import StravaService, { IStravaRoute } from '../StravaService'
 import RouteService, { IRoute } from '../RouteService'
-import { toError } from '../Service'
 import Permissions from '../Permissions'
 
 // Types
@@ -26,126 +25,115 @@ interface IProps {
   deleteNotify: (routeid: number) => void
 }
 
-interface IState {
-  status: Status
-  stravaRoute: IStravaRoute | null
-  error: string | null
-}
+// Services
 
-// Class definition
+const stravaService = new StravaService()
+const routeService = new RouteService()
 
-export default class UpdateRoutesRow extends Component<IProps, IState> {
-  static contextType: typeof StravaContext = StravaContext
-  declare context: React.ContextType<typeof StravaContext>
+// Component
 
-  stravaService: StravaService
-  routeService: RouteService
+export default function UpdateRoutesRow({ route, autoCheck, deleteNotify }: IProps) {
+  const { auth } = useContext(StravaContext)
 
-  constructor(props: IProps) {
-    super(props)
+  const [status, setStatus] = useState(Status.STATUS_NEEDSCHECK)
+  const [stravaRoute, setStravaRoute] = useState<IStravaRoute | null>(null)
 
-    this.state = {
-      status: Status.STATUS_NEEDSCHECK,
-      error: null,
-      stravaRoute: null
-    }
+  const { routeid, updated_at } = route
 
-    this.stravaService = new StravaService()
-    this.routeService = new RouteService()
-  }
-
-  checkRoute = async () => {
+  const checkRoute = useCallback(async () => {
     try {
-      const { auth } = this.context
-
       if (!auth) throw new Error('Not authorised')
 
-      const { jwt } = auth
-      const { route } = this.props
-
       // Set state to pending
-      this.setState({
-        status: Status.STATUS_PENDING,
-      })
+      setStatus(Status.STATUS_PENDING)
 
-      const res = await this.stravaService.route(jwt, route.routeid)
+      const res = await stravaService.route(auth.jwt, routeid)
 
       if (res.ok) {
-        let status = Status.STATUS_UPTODATE
-        const stravaRoute = res.data
-  
-        if (stravaRoute.updated_at !== route.updated_at) {
-          status = Status.STATUS_OUTOFDATE
+        let newStatus = Status.STATUS_UPTODATE
+
+        if (res.data.updated_at !== updated_at) {
+          newStatus = Status.STATUS_OUTOFDATE
         }
-  
-        this.setState({
-          status,
-          stravaRoute
-        })
-  
+
+        setStravaRoute(res.data)
+        setStatus(newStatus)
+
       } else {
-        this.setState({
-          status: Status.STATUS_ERRORED,
-          error: res.data.toString()
-        })
-  
+        setStatus(Status.STATUS_ERRORED)
+
       }
-  
-    } catch(err) {
-      this.setState({
-        status: Status.STATUS_ERRORED,
-        error: toError(err).toString()
-      })
+
+    } catch {
+      setStatus(Status.STATUS_ERRORED)
 
     }
 
-  }
+  }, [auth, routeid, updated_at])
 
-  updateRoute = async () => {
-
+  const updateRoute = async () => {
     try {
-      const { auth } = this.context
-      const { stravaRoute } = this.state
-
       if (!auth) throw new Error('Not authorised')
       if (!stravaRoute) throw new Error('No strava route to update')
 
-      const { jwt } = auth
-      const { route } = this.props
-
       // Set state to updating
-      this.setState({
-        status: Status.STATUS_UPDATING
-      })
+      setStatus(Status.STATUS_UPDATING)
 
-      const res = await this.routeService.upsert(jwt, route.routeid, stravaRoute)
+      const res = await routeService.upsert(auth.jwt, routeid, stravaRoute)
 
       if (res.ok) {
-        this.setState({
-          status: Status.STATUS_UPTODATE
-        })
-  
+        setStatus(Status.STATUS_UPTODATE)
+
       } else {
-        this.setState({
-          status: Status.STATUS_ERRORED,
-          error: res.data.toString()
-        })
-  
+        setStatus(Status.STATUS_ERRORED)
+
       }
-  
-    } catch(err) {
-      this.setState({
-        status: Status.STATUS_ERRORED,
-        error: toError(err).toString()
-      })
+
+    } catch {
+      setStatus(Status.STATUS_ERRORED)
 
     }
 
   }
 
-  updateButton = () => {
-    const { status } = this.state
+  const deleteRoute = async () => {
+    try {
+      if (!auth) throw new Error('Not authorised')
 
+      // Set state to deleting
+      setStatus(Status.STATUS_DELETING)
+
+      const res = await routeService.delete(auth.jwt, routeid)
+
+      if (res.ok) {
+        deleteNotify(routeid)
+
+      } else {
+        setStatus(Status.STATUS_ERRORED)
+
+      }
+
+    } catch {
+      setStatus(Status.STATUS_ERRORED)
+
+    }
+
+  }
+
+  /*
+   * Kick off the check when the parent asks for all routes to be checked. The
+   * check moves the row into its pending state before it awaits the fetch,
+   * which is what the set-state-in-effect rule objects to - there is no event
+   * to hang it off, the request is triggered by the prop changing.
+   */
+  useEffect(() => {
+    if (autoCheck && status === Status.STATUS_NEEDSCHECK) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      checkRoute()
+    }
+  }, [autoCheck, status, checkRoute])
+
+  const updateButton = () => {
     let icon
     let colour
     let enabled = false
@@ -158,7 +146,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
         colour = 'primary'
         desc = 'Needs check'
         enabled = true
-        action = this.checkRoute
+        action = checkRoute
         break
 
       case Status.STATUS_PENDING:
@@ -178,7 +166,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
         colour = 'warning'
         desc = 'Update'
         enabled = true
-        action = this.updateRoute
+        action = updateRoute
         break
 
       case Status.STATUS_DELETING:
@@ -192,7 +180,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
         colour = 'secondary'
         desc = 'Updating'
         break
-  
+
       default:
         icon = <FontAwesomeIcon icon={faExclamationTriangle} spin={false}/>
         colour = 'danger'
@@ -227,9 +215,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
     )
   }
 
-  deleteButton = () => {
-    const { status } = this.state
-
+  const deleteButton = () => {
     const classes = [
       'btn',
       `btn-danger`,
@@ -249,7 +235,7 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
         style={btnStyle}
         key='delete'
         disabled={status === Status.STATUS_DELETING || status === Status.STATUS_ERRORED}
-        onClick={this.deleteRoute}
+        onClick={deleteRoute}
       >
         <FontAwesomeIcon icon={faTrash} spin={false}/>
         <span className='ms-2'>Delete</span>
@@ -257,92 +243,35 @@ export default class UpdateRoutesRow extends Component<IProps, IState> {
     )
   }
 
-  deleteRoute = async () => {
+  if (!auth) return <></>
 
-    try {
-      const { auth } = this.context
+  const { perms } = auth
 
-      if (!auth) throw new Error('Not authorised')
+  const buttons = []
 
-      const { route, deleteNotify } = this.props
-      const { jwt } = auth
+  const permissions = new Permissions(perms)
 
-      // Set state to deleting
-      this.setState({
-        status: Status.STATUS_DELETING,
-      })
-
-      const res = await this.routeService.delete(jwt, route.routeid)
-
-      if (res.ok) {
-        deleteNotify(route.routeid)
-  
-      } else {
-        this.setState({
-          status: Status.STATUS_ERRORED,
-          error: res.data.toString()
-        })
-  
-      }
-  
-    } catch(err) {
-      this.setState({
-        status: Status.STATUS_ERRORED,
-        error: toError(err).toString()
-      })
-
-    }
-
+  if (permissions.check('modifyRoutes')) {
+    buttons.push(updateButton())
   }
 
-  componentWillUnmount = () => {
-    // TODO cancel any pending async
+  if (permissions.check('deleteRoutes')) {
+    buttons.push(deleteButton())
   }
 
-  render = () => {
-    const { auth } = this.context
-
-    if (auth) {
-      const { route, autoCheck } = this.props
-      const { status } = this.state
-      const { perms } = auth
-
-      const buttons = []
-
-      const permissions = new Permissions(perms)
-
-      if (autoCheck && status === Status.STATUS_NEEDSCHECK) {
-        setTimeout(() => {
-          this.checkRoute()
-        }, 0)
-      }
-
-      if (permissions.check('modifyRoutes')) {
-        buttons.push(this.updateButton())
-      }
-
-      if (permissions.check('deleteRoutes')) {
-        buttons.push(this.deleteButton())
-      }
-
-      return (
-        <tr>
-          <td>
-            <a
-              href={`http://www.strava.com/routes/${route.routeid}`}
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              {route.routeid}
-            </a>
-          </td>
-          <td>{route.name}</td>
-          <td style={{whiteSpace: 'nowrap'}}>{buttons}</td>
-        </tr>
-      )
-    }
-
-    return <></>
-  }
-
+  return (
+    <tr>
+      <td>
+        <a
+          href={`http://www.strava.com/routes/${routeid}`}
+          target='_blank'
+          rel='noopener noreferrer'
+        >
+          {routeid}
+        </a>
+      </td>
+      <td>{route.name}</td>
+      <td style={{whiteSpace: 'nowrap'}}>{buttons}</td>
+    </tr>
+  )
 }

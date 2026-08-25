@@ -1,12 +1,7 @@
-import { Component } from 'react'
 import { Link, LinkProps } from 'react-router-dom'
 
-// Class definition
+// Component
 
-export default class NavLink extends Component<LinkProps> {
-
-  render = () => {
-    return <Link className='nav-link' {...this.props}/>
-  }
-
+export default function NavLink(props: LinkProps) {
+  return <Link className='nav-link' {...props}/>
 }

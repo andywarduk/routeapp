@@ -1,4 +1,4 @@
-import { Component, SyntheticEvent } from 'react'
+import { SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react'
 
 import AddRoutesRow from './AddRoutesRow'
 
@@ -11,105 +11,42 @@ enum EStatus {
 
 interface IRoute {
   routeid: number
-  processed: boolean
 }
 
-interface IState {
-  status: EStatus
-  routeList: string
-  routes: IRoute[]
-}
+// Component
 
-// Class definition
+export default function AddRoutes() {
+  const [status, setStatus] = useState(EStatus.STATE_INPUT)
+  const [routeList, setRouteList] = useState('')
+  const [routes, setRoutes] = useState<IRoute[]>([])
 
-export default class AddRoutes extends Component<object, IState> {
+  // Which rows have reported back. Held outside of state - the rows are not
+  // redrawn when one finishes, only when the last one does
+  const processed = useRef<Set<number>>(new Set())
 
-  constructor(props: object) {
-    super(props)
+  // Rows report in from an async callback, so the current list is read from a
+  // ref rather than from a stale closure
+  const routesRef = useRef<IRoute[]>(routes)
 
-    this.state = {
-      status: EStatus.STATE_INPUT,
-      routeList: '',
-      routes: []
-    }
-  }
+  useEffect(() => {
+    routesRef.current = routes
+  }, [routes])
 
-  render() {
-    const { routeList, routes, status } = this.state
-
-    let routeTable = null
-
-    if (routes.length > 0) {
-      const rows = routes.map(r => {
-        return <AddRoutesRow route={r} key={r.routeid} finishNotify={this.finishNotify}/>
-      })
-
-      routeTable = (
-        <table className='table table-sm mt-2'>
-          <thead>
-            <tr>
-              <th className='text-nowrap'>Link</th>
-              <th className='text-nowrap'>Description</th>
-              <th className='text-nowrap'>Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {rows}
-          </tbody>
-        </table>
-      )
-    }
-
-    return (
-      <>
-        <form className='mt-2'>
-          <div className="mb-3">
-            <label htmlFor="routeList">Enter list of route IDs or strava route URLs:</label>
-            <textarea
-              className="form-control"
-              id="routeList"
-              rows={6}
-              value={routeList}
-              onChange={(evt) => this.routeListChanged(evt)}
-              disabled={status !== EStatus.STATE_INPUT}
-            />
-          </div>
-          <div className="mb-3">
-            <button
-              type='submit'
-              className='btn btn-primary'
-              onClick={(evt) => this.process(evt)}
-              disabled={status !== EStatus.STATE_INPUT}
-            >
-              Process
-            </button>
-          </div>
-        </form>
-
-        {routeTable}
-      </>
-    )
-  }
-
-  process = (evt: SyntheticEvent) => {
+  const process = (evt: SyntheticEvent) => {
     evt.preventDefault()
-
-    const { routeList, routes } = this.state
 
     const routeStrings = routeList.split('\n')
 
     const newRoutes = routeStrings.reduce((arr: IRoute[], rs) => {
       const rm = rs.match(/[0-9]*$/)
-      
+
       if (rm){
         const r = rm[0]
 
         if (r && r !== '') {
           const ri = parseInt(r)
           if (ri > 0) arr.push({
-            routeid: ri,
-            processed: false
+            routeid: ri
           })
         }
       }
@@ -117,39 +54,82 @@ export default class AddRoutes extends Component<object, IState> {
       return arr
     }, [])
 
-    this.setState({
-      status: EStatus.STATE_PROCESSING,
-      routes: routes.concat(newRoutes)
-    })
+    setStatus(EStatus.STATE_PROCESSING)
+    setRoutes(routes.concat(newRoutes))
   }
 
-  routeListChanged = (evt: SyntheticEvent<HTMLTextAreaElement>) => {
-    const routeList = evt.currentTarget.value
-
-    this.setState({
-      routeList
-    })
+  const routeListChanged = (evt: SyntheticEvent<HTMLTextAreaElement>) => {
+    setRouteList(evt.currentTarget.value)
   }
 
-  finishNotify = (routeid: number) => {
-    const { routes } = this.state
-
-    const elem = routes.find((r) => r.routeid === routeid)
+  const finishNotify = useCallback((routeid: number) => {
+    const elem = routesRef.current.find((r) => r.routeid === routeid)
 
     if (elem) {
-      elem.processed = true
+      processed.current.add(routeid)
 
       // All processed?
-      const firstProc = routes.find((r) => r.processed === false)
+      const firstProc = routesRef.current.find((r) => !processed.current.has(r.routeid))
 
       if (!firstProc) {
         // Yes - allow new input
-        this.setState({
-          status: EStatus.STATE_INPUT,
-          routeList: ''
-        })  
+        setStatus(EStatus.STATE_INPUT)
+        setRouteList('')
       }
     }
+  }, [])
+
+  let routeTable = null
+
+  if (routes.length > 0) {
+    const rows = routes.map(r => {
+      return <AddRoutesRow route={r} key={r.routeid} finishNotify={finishNotify}/>
+    })
+
+    routeTable = (
+      <table className='table table-sm mt-2'>
+        <thead>
+          <tr>
+            <th className='text-nowrap'>Link</th>
+            <th className='text-nowrap'>Description</th>
+            <th className='text-nowrap'>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {rows}
+        </tbody>
+      </table>
+    )
   }
 
+  return (
+    <>
+      <form className='mt-2'>
+        <div className="mb-3">
+          <label htmlFor="routeList">Enter list of route IDs or strava route URLs:</label>
+          <textarea
+            className="form-control"
+            id="routeList"
+            rows={6}
+            value={routeList}
+            onChange={(evt) => routeListChanged(evt)}
+            disabled={status !== EStatus.STATE_INPUT}
+          />
+        </div>
+        <div className="mb-3">
+          <button
+            type='submit'
+            className='btn btn-primary'
+            onClick={(evt) => process(evt)}
+            disabled={status !== EStatus.STATE_INPUT}
+          >
+            Process
+          </button>
+        </div>
+      </form>
+
+      {routeTable}
+    </>
+  )
 }

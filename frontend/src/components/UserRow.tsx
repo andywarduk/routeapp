@@ -1,7 +1,6 @@
-import { Component } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { IUser } from '../UserService'
-import { withRouter, RouterProps } from './withRouter'
 
 // Types
 
@@ -10,79 +9,75 @@ interface IProps {
   colClasses: string[][]
 }
 
-// Class definition
+// Helpers
 
-class UserRow extends Component<RouterProps & IProps> {
+const commaSep = (...args: string[]) => {
+  return args.reduce((result, str) => {
+    if (str && str !== '') {
+      if (result === '') result = str
+      else result = `${result}, ${str}`
+    }
+    return result
+  }, '')
+}
 
-  commaSep = (...args: string[]) => {
-    return args.reduce((result, str) => {
-      if (str && str !== '') {
-        if (result === '') result = str
-        else result = `${result}, ${str}`
-      }
-      return result
-    }, '')
-  }
+const permBadge = (colour: string, text: string) => {
+  const classes = [
+    'badge',
+    `bg-${colour}`,
+    'btn-sm',
+    'text-nowrap'
+  ]
 
-  permBadge = (colour: string, text: string) => {
-    const classes = [
-      'badge',
-      `bg-${colour}`,
-      'btn-sm',
-      'text-nowrap'
-    ]
+  return (
+    <span
+      key={text}
+      className={classes.join(' ')}
+    >
+      <span className='mx-1'>{text}</span>
+    </span>
+  )
+}
 
-    return (
-      <span
-        key={text}
-        className={classes.join(' ')}
-      >
-        <span className='mx-1'>{text}</span>
-      </span>
-    )
-  }
+// Component
 
-  click = () => {
-    const { navigate, location, user } = this.props
+export default function UserRow({ user, colClasses }: IProps) {
+  const location = useLocation()
+  const navigate = useNavigate()
 
+  const { stravaUser, perms: userPerms } = user
+
+  const click = () => {
     navigate(`${location.pathname.replace(/\/+$/, '')}/${user.athleteid}`)
   }
 
-  render = () => {
-    const { user, colClasses } = this.props
-    const { stravaUser, perms: userPerms } = user
+  const perms = []
 
-    const perms = []
+  if (userPerms) {
+    if (userPerms.admin) {
+      perms.push(permBadge('danger', 'Admin'))
 
-    if (userPerms) {
-      if (userPerms.admin) {
-        perms.push(this.permBadge('danger', 'Admin'))
-
-      } else {
-        for (const k of Object.keys(userPerms)) {
-          if (k !== 'viewRoutes' && k !== 'admin') {
-            perms.push(this.permBadge('warning', 'Modify'))
-            break
-          }
-        }
-
-        if (perms.length === 0) {
-          perms.push(this.permBadge('secondary', 'User'))
+    } else {
+      for (const k of Object.keys(userPerms)) {
+        if (k !== 'viewRoutes' && k !== 'admin') {
+          perms.push(permBadge('warning', 'Modify'))
+          break
         }
       }
-    }
 
-    return (
-      <tr onClick={this.click} style={{cursor: 'pointer'}}>
-        <td className={colClasses[0].join(' ')}>{stravaUser.id}</td>
-        <td className={colClasses[1].join(' ')}>{stravaUser.firstname}</td>
-        <td className={colClasses[2].join(' ')}>{stravaUser.lastname}</td>
-        <td className={colClasses[3].join(' ')}>{this.commaSep(stravaUser.city, stravaUser.state, stravaUser.country)}</td>
-        <td className={colClasses[4].join(' ')}>{perms}</td>
-      </tr>
-    )
+      if (perms.length === 0) {
+        perms.push(permBadge('secondary', 'User'))
+      }
+    }
   }
 
+  return (
+    <tr onClick={click} style={{cursor: 'pointer'}}>
+      <td className={colClasses[0].join(' ')}>{stravaUser.id}</td>
+      <td className={colClasses[1].join(' ')}>{stravaUser.firstname}</td>
+      <td className={colClasses[2].join(' ')}>{stravaUser.lastname}</td>
+      <td className={colClasses[3].join(' ')}>{commaSep(stravaUser.city, stravaUser.state, stravaUser.country)}</td>
+      <td className={colClasses[4].join(' ')}>{perms}</td>
+    </tr>
+  )
 }
-
-export default withRouter(UserRow)

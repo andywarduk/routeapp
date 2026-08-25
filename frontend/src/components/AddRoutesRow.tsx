@@ -1,4 +1,4 @@
-import { Component } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSyncAlt, faExclamationTriangle, faCheck } from '@fortawesome/free-solid-svg-icons'
 
@@ -22,143 +22,121 @@ interface IProps {
   finishNotify: (routeid: number) => void
 }
 
-interface IState {
-  status: EStatus
-  desc: string
-  stravaRoute: IStravaRoute | null
-}
+// Services
 
-// Class definition
+const stravaService = new StravaService()
+const routeService = new RouteService()
 
-export default class AddRoutesRow extends Component<IProps, IState> {
-  static contextType: typeof StravaContext = StravaContext
-  declare context: React.ContextType<typeof StravaContext>
+// Component
 
-  stravaService: StravaService
-  routeService: RouteService
+export default function AddRoutesRow({ route, finishNotify }: IProps) {
+  const { auth } = useContext(StravaContext)
 
-  constructor(props: IProps) {
-    super(props)
+  const [status, setStatus] = useState(EStatus.STATUS_PENDING)
+  const [desc, setDesc] = useState('')
 
-    this.state = {
-      status: EStatus.STATUS_PENDING,
-      desc: '',
-      stravaRoute: null
-    }
+  const { routeid } = route
 
-    this.stravaService = new StravaService()
-    this.routeService = new RouteService()
-  }
+  // The download runs once per route id; the callback and the token are read
+  // through a ref so that neither restarts it
+  const latest = useRef({ auth, finishNotify })
 
-  downloadRoute = async () => {
-    const { route, finishNotify } = this.props
-    const { auth } = this.context
+  useEffect(() => {
+    latest.current = { auth, finishNotify }
+  })
 
-    try {
+  useEffect(() => {
+    let cancelled = false
+
+    const uploadRoute = async (stravaRoute: IStravaRoute) => {
+      const { auth, finishNotify } = latest.current
+
       if (!auth) throw new Error('Not authenticated')
 
-      const { jwt } = auth
+      const res = await routeService.upsert(auth.jwt, routeid, stravaRoute)
 
-      const res = await this.stravaService.route(jwt, route.routeid)
+      if (cancelled) return
 
       if (res.ok) {
-        this.setState({
-          status: EStatus.STATUS_FETCHED,
-          stravaRoute: res.data,
-          desc: res.data.name || ''
-        })
-
-        await this.uploadRoute()
+        setStatus(EStatus.STATUS_FINISHED)
 
       } else {
-        this.setState({
-          status: EStatus.STATUS_ERRORED,
-          desc: res.data.toString()
-        })
-        finishNotify(route.routeid)
+        setStatus(EStatus.STATUS_ERRORED)
+        setDesc(res.data.toString())
 
       }
 
-    } catch(err) {
-      this.setState({
-        status: EStatus.STATUS_ERRORED,
-        desc: toError(err).toString()
-      })
-      finishNotify(route.routeid)
-
+      finishNotify(routeid)
     }
 
-  }
+    const downloadRoute = async () => {
+      try {
+        const { auth, finishNotify } = latest.current
 
-  uploadRoute = async () => {
-    const { route, finishNotify } = this.props
-    const { stravaRoute } = this.state
-    const { auth } = this.context
+        if (!auth) throw new Error('Not authenticated')
 
-    try {
-      if (!stravaRoute) throw new Error('stravaRoute empty')
-      if (!auth) throw new Error('Not authenticated')
+        const res = await stravaService.route(auth.jwt, routeid)
 
-      const { jwt } = auth
+        if (cancelled) return
 
-      const res = await this.routeService.upsert(jwt, route.routeid, stravaRoute)
+        if (res.ok) {
+          setStatus(EStatus.STATUS_FETCHED)
+          setDesc(res.data.name || '')
 
-      if (res.ok) {
-        this.setState({
-          status: EStatus.STATUS_FINISHED
-        })
-        finishNotify(route.routeid)
+          await uploadRoute(res.data)
 
-      } else {
-        this.setState({
-          status: EStatus.STATUS_ERRORED,
-          desc: res.data.toString()
-        })
-        finishNotify(route.routeid)
+        } else {
+          setStatus(EStatus.STATUS_ERRORED)
+          setDesc(res.data.toString())
+          finishNotify(routeid)
+
+        }
+
+      } catch(err) {
+        if (cancelled) return
+
+        setStatus(EStatus.STATUS_ERRORED)
+        setDesc(toError(err).toString())
+        latest.current.finishNotify(routeid)
 
       }
-
-    } catch(err) {
-      this.setState({
-        status: EStatus.STATUS_ERRORED,
-        desc: toError(err).toString()
-      })
-      finishNotify(route.routeid)
-
     }
 
-  }
+    downloadRoute()
 
-  statusBadge = () => {
-    const { status } = this.state
+    return () => {
+      cancelled = true
+    }
+  }, [routeid])
 
+  const statusBadge = () => {
     let icon
     let colour
-    let desc
+    let badgeDesc
 
     switch(status) {
       case EStatus.STATUS_PENDING:
         icon = <FontAwesomeIcon icon={faSyncAlt} spin={true}/>
         colour = 'secondary'
-        desc = 'Downloading'
+        badgeDesc = 'Downloading'
         break
 
       case EStatus.STATUS_FETCHED:
         icon = <FontAwesomeIcon icon={faSyncAlt} spin={true}/>
         colour = 'secondary'
-        desc = 'Uploading'
+        badgeDesc = 'Uploading'
         break
 
       case EStatus.STATUS_FINISHED:
         icon = <FontAwesomeIcon icon={faCheck} spin={false}/>
         colour = 'primary'
-        desc = 'Finished'
+        badgeDesc = 'Finished'
         break
 
       default:
         icon = <FontAwesomeIcon icon={faExclamationTriangle} spin={false}/>
         colour = 'danger'
-        desc = 'Errored'
+        badgeDesc = 'Errored'
         break
 
     }
@@ -180,39 +158,25 @@ export default class AddRoutesRow extends Component<IProps, IState> {
         style={badgeStyle}
       >
         {icon}
-        <span className='ms-2'>{desc}</span>
+        <span className='ms-2'>{badgeDesc}</span>
       </span>
     )
 
   }
 
-  componentDidMount = () => {
-    this.downloadRoute()
-  }
-
-  componentWillUnmount = () => {
-    // TODO cancel any pending async
-  }
-
-  render = () => {
-    const { route } = this.props
-    const { desc } = this.state
-
-    return (
-      <tr>
-        <td>
-          <a
-            href={`http://www.strava.com/routes/${route.routeid}`}
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            {route.routeid}
-          </a>
-        </td>
-        <td>{desc}</td>
-        <td>{this.statusBadge()}</td>
-      </tr>
-    )
-  }
-
+  return (
+    <tr>
+      <td>
+        <a
+          href={`http://www.strava.com/routes/${routeid}`}
+          target='_blank'
+          rel='noopener noreferrer'
+        >
+          {routeid}
+        </a>
+      </td>
+      <td>{desc}</td>
+      <td>{statusBadge()}</td>
+    </tr>
+  )
 }

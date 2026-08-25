@@ -1,4 +1,4 @@
-import { Component, ReactNode } from 'react'
+import { ReactNode } from 'react'
 
 import Nav from './Nav'
 
@@ -6,27 +6,21 @@ import Nav from './Nav'
 
 interface IProps {
   navContent?: ReactNode
-  // React 19 removed the implicit children prop from Component<P>
   children?: ReactNode
 }
 
-// Class definition
+// Component
 
-export default class Page extends Component<IProps> {
+export default function Page({ children, navContent }: IProps) {
+  return (
+    <>
+      <Nav>
+        {navContent}
+      </Nav>
 
-  render = () => {
-    const { children, navContent } = this.props
-
-    return (
-      <>
-        <Nav>
-          {navContent}
-        </Nav>
-
-        <div className='container-fluid'>
-          {children}
-        </div>
-      </>
-    )
-  }
+      <div className='container-fluid'>
+        {children}
+      </div>
+    </>
+  )
 }

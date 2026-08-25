@@ -1,5 +1,3 @@
-import { Component } from 'react'
-
 // Types
 
 interface IProps {
@@ -7,25 +5,18 @@ interface IProps {
   desc?: string
 }
 
-// Class definition
+// Component
 
-export default class StravaRouteLink extends Component<IProps> {
+export default function StravaRouteLink({ routeid, desc }: IProps) {
+  if (!desc || desc === '') desc = '' + routeid
 
-  render() {
-    const { routeid } = this.props
-    let { desc } = this.props
-
-    if (!desc || desc === '') desc = '' + routeid
-
-    return (
-      <a
-        href={`http://www.strava.com/routes/${routeid}`}
-        target='_blank'
-        rel='noopener noreferrer'
-      >
-        {desc}
-      </a>
-    )
-  }
-
+  return (
+    <a
+      href={`http://www.strava.com/routes/${routeid}`}
+      target='_blank'
+      rel='noopener noreferrer'
+    >
+      {desc}
+    </a>
+  )
 }
