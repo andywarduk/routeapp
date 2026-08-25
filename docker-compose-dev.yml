@@ -8,6 +8,12 @@ services:
     volumes:
       - data-db-dev:/data/db
       - data-configdb-dev:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
     networks:
       - dev_default
 
@@ -21,8 +27,11 @@ services:
       - ./backend:/app
       - /app/node_modules
       - /app/build
+    env_file:
+      - "./backend/.env"
     depends_on:
-      - mongodb-dev
+      mongodb-dev:
+        condition: service_healthy
     networks:
       - dev_default
 

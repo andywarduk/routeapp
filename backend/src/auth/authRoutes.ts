@@ -100,7 +100,9 @@ router.route('/auth').post(async function (req, res) {
     }
 
     const token = jwt.sign(jwtPayload, config.jwtSecret, {
-      issuer: config.jwtIssuer
+      issuer: config.jwtIssuer,
+      expiresIn: config.jwtExpiresIn,
+      algorithm: config.jwtAlgorithm
     })
 
     // Send back details

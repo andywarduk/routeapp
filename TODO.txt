@@ -1,2 +1,9 @@
-Health check - https://docs.docker.com/compose/compose-file/#healthcheck
-https
+https - needs a certificate source (a domain plus ACME, or certs mounted into
+the frontend container) and a TLS server block in frontend/nginx.conf. Not
+done: nothing here can provision a certificate.
+
+Health checks - done. /api/health on the backend, plus healthcheck stanzas and
+condition: service_healthy in both compose files.
+
+Consider a Content-Security-Policy header in nginx.conf once the map tile and
+API origins are settled.

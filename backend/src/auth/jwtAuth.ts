@@ -12,7 +12,9 @@ export default () => {
   passport.use(new JwtStrategy({
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: config.jwtSecret,
-    issuer: config.jwtIssuer
+    issuer: config.jwtIssuer,
+    // Pin the algorithm so a token cannot pick a weaker one
+    algorithms: [config.jwtAlgorithm]
   }, async (jwt_payload, done) => {
     // Try and load the user details
     try {

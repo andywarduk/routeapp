@@ -32,10 +32,28 @@ async function main()
   // App Instance
   const app = express()
   app.use(express.static('public'))
-  app.use(cors())
+
+  // Only enable CORS when an origin is configured. Previously cors() ran with
+  // no options, which allowed any origin.
+  if (config.corsOrigins.length > 0) {
+    app.use(cors({
+      origin: config.corsOrigins
+    }))
+  }
+
   app.use(express.json({
     limit: '4096kb'
   }))
+
+  // Health check, for container orchestration
+  app.get(`${basePath}/health`, (_req, res) => {
+    const ready = mongoose.connection.readyState === 1
+
+    res.status(ready ? 200 : 503).json({
+      ok: ready,
+      db: ready ? 'connected' : 'disconnected'
+    })
+  })
 
   app.use(basePath, routesRoutes)
   app.use(basePath, authRoutes)
