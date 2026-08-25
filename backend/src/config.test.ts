@@ -21,7 +21,7 @@ const loadConfig = async (env: Record<string, string | undefined>) => {
 
   Object.assign(process.env, env)
 
-  return import('./config')
+  return import('./config.js')
 }
 
 const valid = {
@@ -51,17 +51,17 @@ describe('config', () => {
   })
 
   it('defaults tokens to a 7 day expiry', async () => {
-    const { default: config } = await loadConfig(valid)
+    const { config } = await loadConfig(valid)
     expect(config.jwtExpiresIn).toBe('7d')
   })
 
   it('leaves CORS disabled unless origins are named', async () => {
-    const { default: config } = await loadConfig(valid)
+    const { config } = await loadConfig(valid)
     expect(config.corsOrigins).toEqual([])
   })
 
   it('parses a comma separated CORS_ORIGIN, ignoring blanks and spacing', async () => {
-    const { default: config } = await loadConfig({
+    const { config } = await loadConfig({
       ...valid,
       CORS_ORIGIN: 'https://a.example, https://b.example, '
     })
@@ -69,7 +69,7 @@ describe('config', () => {
   })
 
   it('treats an unset SUPER_ATHLETE as absent rather than NaN', async () => {
-    const { default: config } = await loadConfig(valid)
+    const { config } = await loadConfig(valid)
     expect(config.superAthlete).toBeUndefined()
   })
 })

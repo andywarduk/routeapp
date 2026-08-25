@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import response from '../response';
 import { checkPermission, permsDesc } from '../auth/permissions';
 import stravaOAuth from '../strava/stravaOAuth';
-import config from '../config';
+import { config } from '../config';
 
 // User schemas
 import StravaUsers from '../models/stravaUsers';

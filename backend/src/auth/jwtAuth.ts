@@ -2,7 +2,7 @@ import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt'
 
 import stravaOAuth from '../strava/stravaOAuth';
-import config from '../config';
+import { config } from '../config';
 
 // User schema
 import Users from '../models/users';

@@ -27,7 +27,7 @@ export const isProduction = nodeEnv === 'production'
  * inline with `|| ''` fallbacks, which turned a missing JWT_SECRET into an
  * empty signing key rather than an error.
  */
-const config = {
+export const config = {
   nodeEnv,
   port: parseInt(process.env.PORT || '6200', 10),
 
@@ -80,5 +80,3 @@ export const mongoUri = () => {
 
   return `mongodb://${userPwd}${host}/${name}?authSource=admin`
 }
-
-export default config

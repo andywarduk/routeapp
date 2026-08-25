@@ -2,7 +2,7 @@ import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
 
-import config, { mongoUri } from './src/config'
+import { config, mongoUri } from './src/config'
 import setupJwtAuth from './src/auth/jwtAuth'
 
   // Routes and backend functions
