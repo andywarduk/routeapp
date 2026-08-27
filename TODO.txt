@@ -1,10 +1,3 @@
-https - done. Let's Encrypt via certbot, terminated in the frontend container.
-See the HTTPS section of README.md for the one-time issuance step; renewal is
-automatic. Still needs a real domain - nothing here can conjure one up.
-
-Health checks - done. /api/health on the backend, plus healthcheck stanzas and
-condition: service_healthy in both compose files.
-
 Turn on HSTS in nginx.conf.template once https has been running cleanly for a
 while. Left off deliberately for the cutover: a max-age of a year is not
 practically reversible, since browsers that have seen it refuse plain http for
@@ -13,3 +6,15 @@ max-age=300, then a day, then a year.
 
 Consider a Content-Security-Policy header in nginx.conf.template once the map
 tile and API origins are settled.
+
+Rate limiting on auth endpoints
+
+Polylines - casings and a hover highlight are in. Two things still make them
+harder to read than they need to be:
+
+- The middle of the distance colour ramp is pale yellow, which is the faintest
+  thing on the map whatever the casing does. A constant-lightness ramp would fix
+  it, and would probably make the point below moot as well.
+- The black casing does very little against the Satellite base layer, where a
+  white one works and black does not. Switching casing colour on
+  baselayerchange would cover it if the ramp alone turns out not to.

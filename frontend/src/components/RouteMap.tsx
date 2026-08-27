@@ -1,6 +1,6 @@
 import { CSSProperties, useContext, useEffect, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Polyline, Popup, LayersControl, useMap } from 'react-leaflet'
-import { LatLngBounds, LatLngTuple } from 'leaflet'
+import { MapContainer, TileLayer, Polyline, Popup, LayersControl, Pane, useMap } from 'react-leaflet'
+import { LatLngBounds, LatLngTuple, Polyline as LeafletPolyline } from 'leaflet'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
@@ -38,6 +38,32 @@ interface IPolyLine {
 const mapCentreEnv = (import.meta.env.VITE_MAP_CENTRE || '').split(',').map(parseFloat)
 
 const mapCentre: LatLngTuple = (mapCentreEnv.length === 2 ? [mapCentreEnv[0], mapCentreEnv[1]] : [0, 0])
+
+/*
+ * Each route is drawn twice - a wider casing underneath and the coloured stroke
+ * on top - so that a route stays readable against tiles which are themselves
+ * full of coloured lines. The casing is dark rather than white because the
+ * middle of the distance ramp is pale, and a white halo does nothing for a
+ * stroke which is already close to white.
+ */
+const casingColour = '#000000'
+const casingOpacity = 0.4
+
+const strokeWeight = 4
+const casingWeight = 5
+
+/*
+ * The hovered route is redrawn in a pane of its own above the rest, rather than
+ * by restyling and re-stacking the route itself. Leaflet's bringToFront() is an
+ * appendChild, and moving a path out from under the pointer loses the browser's
+ * record of what the pointer is inside, so the matching mouseout never arrives
+ * and the highlight sticks. Nothing here moves, so the events stay intact.
+ */
+const highlightPane = 'routeHighlight'
+const highlightZIndex = 450
+
+const hoverStrokeWeight = 7
+const hoverCasingWeight = 8
 
 const defaultMinMax = (): MinMax => {
   return {
@@ -90,6 +116,15 @@ export default function RouteMap({ routes }: IProps) {
   // Bumped once a load finishes, so that routes which changed while it was
   // running get picked up
   const [loadCount, setLoadCount] = useState(0)
+
+  // The two overlay layers which draw whichever route is hovered
+  const highlightCasing = useRef<LeafletPolyline | null>(null)
+  const highlightStroke = useRef<LeafletPolyline | null>(null)
+
+  const clearHighlight = () => {
+    highlightCasing.current?.setLatLngs([])
+    highlightStroke.current?.setLatLngs([])
+  }
 
   // Fetch the summary polylines whenever the set of routes changes
   useEffect(() => {
@@ -173,6 +208,11 @@ export default function RouteMap({ routes }: IProps) {
       loadedRoutes.current = newPolyLines
       loadRunning.current = false
 
+      // A route which is hovered as it is filtered away never gets its mouseout,
+      // so drop the overlay rather than leave it drawing a route which has gone
+      highlightCasing.current?.setLatLngs([])
+      highlightStroke.current?.setLatLngs([])
+
       setPolyLines(newPolyLines)
       setMinMax(newMinMax)
       setLoading(false)
@@ -210,17 +250,63 @@ export default function RouteMap({ routes }: IProps) {
 
   const distRange = maxDist - minDist
 
-  const mapPolyLines = polyLines.reduce((arr: React.JSX.Element[], p, i) => {
+  const colourFor = (distance: number) => {
+    const distRatio = (distRange === 0 ? 1 : ((distance - minDist) / distRange)) * 512
+
+    const red = Math.min(255, distRatio)
+    const green = Math.min(255, 512 - distRatio)
+
+    return `rgb(${red},${green},0)`
+  }
+
+  const highlight = (i: number, on: boolean) => {
+    const casing = highlightCasing.current
+    const stroke = highlightStroke.current
+
+    if (!casing || !stroke) return
+
+    const p = polyLines[i]
+
+    if (!on || !p?.polyLine) {
+      clearHighlight()
+      return
+    }
+
+    casing.setLatLngs(p.polyLine)
+    stroke.setLatLngs(p.polyLine)
+    stroke.setStyle({color: colourFor(p.distance)})
+  }
+
+  /*
+   * Each route is drawn as its own casing followed immediately by its own
+   * stroke, so that a route crossing another passes visibly over it instead of
+   * every route sharing one flat shadow. Routes which run along the same road
+   * are unaffected either way - their strokes are coincident, so the last one
+   * drawn is the one which shows.
+   */
+  const mapPolyLines: React.JSX.Element[] = []
+
+  polyLines.forEach((p, i) => {
     if (p.polyLine) {
-      const distRatio = (distRange === 0 ? 1 : ((p.distance - minDist) / distRange)) * 512
+      mapPolyLines.push(
+        <Polyline
+          key={`casing-${i}`}
+          positions={p.polyLine}
+          interactive={false}
+          pathOptions={{color: casingColour, weight: casingWeight, opacity: casingOpacity, lineCap: 'round', lineJoin: 'round'}}
+        />
+      )
 
-      const red = Math.min(255, distRatio)
-      const green = Math.min(255, 512 - distRatio)
-
-      const colour = `rgb(${red},${green},0)`
-
-      arr.push(
-        <Polyline key={i} color={colour} positions={p.polyLine}>
+      mapPolyLines.push(
+        <Polyline
+          key={`stroke-${i}`}
+          positions={p.polyLine}
+          pathOptions={{color: colourFor(p.distance), weight: strokeWeight, lineCap: 'round', lineJoin: 'round'}}
+          eventHandlers={{
+            mouseover: () => highlight(i, true),
+            mouseout: () => highlight(i, false)
+          }}
+        >
           <Popup>
             <StravaRouteLink routeid={p.routeid} desc={p.name}/>
             <table style={{'margin': 'auto'}}>
@@ -251,9 +337,8 @@ export default function RouteMap({ routes }: IProps) {
         </Polyline>
       )
     }
+  })
 
-    return arr
-  }, [])
 
   const bounds = boundingBox()
 
@@ -323,6 +408,21 @@ export default function RouteMap({ routes }: IProps) {
 
         </LayersControl>
         {mapPolyLines}
+
+        <Pane name={highlightPane} style={{zIndex: highlightZIndex, pointerEvents: 'none'}}>
+          <Polyline
+            ref={highlightCasing}
+            positions={[]}
+            interactive={false}
+            pathOptions={{color: casingColour, weight: hoverCasingWeight, opacity: casingOpacity, lineCap: 'round', lineJoin: 'round'}}
+          />
+          <Polyline
+            ref={highlightStroke}
+            positions={[]}
+            interactive={false}
+            pathOptions={{weight: hoverStrokeWeight, lineCap: 'round', lineJoin: 'round'}}
+          />
+        </Pane>
       </MapContainer>
     </div>
   )
