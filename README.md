@@ -1,11 +1,5 @@
 # CCC Route Finder
 
-Originally derived from the MERN tutorial at:
-
-- [Ep01 - Setting up a development environment with Docker](https://medium.com/codebase/mern-ep01-setting-up-a-development-environment-with-docker-1bb0b6e4d464)
-- [Ep02 - Developing the back end with MongoDB, NodeJS and Express](https://medium.com/codebase/mern-ep02-developing-the-back-end-with-mongodb-nodejs-and-express-556a6748b550)
-- [Ep03 - Developing the front end with NodeJS, ReactJS and Bootstrap 3](https://medium.com/codebase/mern-ep03-developing-the-front-end-with-nodejs-reactjs-and-bootstrap-3-eda5aba8f8d6)
-
 ## Running
 
 Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to
@@ -73,8 +67,7 @@ cd backend  && npm ci && BACKEND_URL=http://localhost:6200 npm run watch
 cd frontend && npm ci && BACKEND_URL=http://localhost:6200 npm run dev
 ```
 
-Requires Node 24 (the active LTS line). Node 22 enters end-of-life in April
-2027 and is already security-fixes-only.
+Requires Node 24 (the active LTS line).
 
 ## Checks
 

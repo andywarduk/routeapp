@@ -23,7 +23,6 @@ services:
     restart: always
     expose:
       - "6200"
-    # Secrets are injected at runtime rather than baked into the image
     env_file:
       - "./backend/.env"
     depends_on:
@@ -49,8 +48,6 @@ services:
       backend-prod:
         condition: service_healthy
     healthcheck:
-      # /healthz rather than / because / is a 301 to the public origin, which
-      # does not necessarily resolve from inside the container.
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
       interval: 30s
       timeout: 5s
