@@ -11,3 +11,20 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/*
+ * The B&W base layer is the standard OpenStreetMap tile set drained of colour
+ * in the browser - the bw-mapnik render it used to pull from wmflabs.org no
+ * longer exists, and the tiles are already cached from the colour layer.
+ */
+.leaflet-layer.tile-greyscale {
+  filter: grayscale(1);
+}
+
+/*
+ * The hillshade tiles are white with grey shadows, so multiplying them into the
+ * base layer leaves the flat ground untouched and only darkens the slopes.
+ */
+.leaflet-layer.tile-hillshade {
+  mix-blend-mode: multiply;
+}
