@@ -14,6 +14,8 @@ import usersRoutes from './src/users/usersRoutes'
 const basePath = '/api'
 const connectRetries = 20
 const connectRetryDelay = 5000
+const pingTimeout = 2000
+const maxPoolSize = 10
 
 main().catch((err) => {
   console.error(err)
@@ -46,8 +48,8 @@ async function main()
   }))
 
   // Health check, for container orchestration
-  app.get(`${basePath}/health`, (_req, res) => {
-    const ready = mongoose.connection.readyState === 1
+  app.get(`${basePath}/health`, async (_req, res) => {
+    const ready = await databaseReady()
 
     res.status(ready ? 200 : 503).json({
       ok: ready,
@@ -66,13 +68,51 @@ async function main()
   })
 }
 
+/*
+ * readyState is only the driver's view of the socket, so it is followed by a
+ * real round trip: a mongod which has wedged while holding the connection open
+ * still reads as connected otherwise.
+ *
+ * The round trip needs a client side bound. maxTimeMS asks the server to give
+ * up after the deadline, which is no use when the server is the thing that has
+ * stopped answering - it never reads the command in the first place, and the
+ * ping then hangs for as long as the caller will wait. The race is what
+ * actually fires in that case; maxTimeMS is kept for the opposite one, where
+ * the server is alive but slow.
+ */
+async function databaseReady()
+{
+  if (mongoose.connection.readyState !== 1) return false
+
+  const db = mongoose.connection.db
+
+  if (!db) return false
+
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const expired = new Promise<boolean>((resolve) => {
+    timer = setTimeout(() => resolve(false), pingTimeout)
+  })
+
+  try {
+    return await Promise.race([
+      db.admin().ping({ maxTimeMS: pingTimeout }).then(() => true),
+      expired
+    ])
+  } catch {
+    return false
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function connectToDatabase()
 {
   const uri = mongoUri()
 
   for (let attempt = 1; attempt <= connectRetries; attempt++) {
     try {
-      await mongoose.connect(uri)
+      await mongoose.connect(uri, { maxPoolSize })
       return
     } catch (err) {
       console.error(`Failed to connect to database (attempt ${attempt}/${connectRetries})`, err)

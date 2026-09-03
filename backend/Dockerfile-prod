@@ -22,8 +22,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/build ./build
 
-# Configuration is supplied at runtime (compose env_file), never baked into an
-# image layer - the .env used to be COPYed in here alongside the build output.
+# Configuration is supplied at runtime (compose env_file)
 
 EXPOSE 6200
 
@@ -31,6 +30,6 @@ EXPOSE 6200
 USER node
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:6200/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+  CMD wget -q -O /dev/null http://127.0.0.1:6200/api/health
 
 CMD [ "npm", "start" ]
