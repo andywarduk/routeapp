@@ -1,3 +1,10 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    # Cap container logs so they can't grow without bound between deploys.
+    max-size: "10m"
+    max-file: "3"
+
 services:
   mongodb-dev:
     image: "mongo:8"
@@ -16,6 +23,7 @@ services:
       retries: 3
     networks:
       - dev_default
+    logging: *default-logging
 
   backend-dev:
     build:
@@ -34,6 +42,7 @@ services:
         condition: service_healthy
     networks:
       - dev_default
+    logging: *default-logging
 
   frontend-dev:
     build:
@@ -48,6 +57,7 @@ services:
       - backend-dev
     networks:
       - dev_default
+    logging: *default-logging
 
 volumes:
   data-db-dev:

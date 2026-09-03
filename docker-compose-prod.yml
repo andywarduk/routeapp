@@ -1,3 +1,10 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    # Cap container logs so they can't grow without bound between deploys.
+    max-size: "10m"
+    max-file: "3"
+
 services:
   mongodb-prod:
     image: "mongo:8"
@@ -11,6 +18,7 @@ services:
     volumes:
       - data-db-prod:/data/db
       - data-configdb-prod:/data/configdb
+    logging: *default-logging
 
   backend-prod:
     build:
@@ -24,6 +32,7 @@ services:
     depends_on:
       mongodb-prod:
         condition: service_started
+    logging: *default-logging
 
   frontend-prod:
     build:
@@ -49,6 +58,7 @@ services:
       timeout: 5s
       start_period: 10s
       retries: 3
+    logging: *default-logging
 
   # Renewal loop. Certificates last 90 days and certbot renews at 30 days
   # remaining, so a twice-daily check is plenty; anything more often just
@@ -74,6 +84,7 @@ services:
     depends_on:
       frontend-prod:
         condition: service_healthy
+    logging: *default-logging
 
   # One-time issuance, held behind a profile so a normal `up` never starts it.
   # Binds port 80 itself, so the rest of the stack has to be down when it runs.
@@ -90,6 +101,7 @@ services:
       --cert-name "${APP_DOMAIN:?set APP_DOMAIN in .env - see .env.example}"
       --email "${CERTBOT_EMAIL:?set CERTBOT_EMAIL in .env - see .env.example}"
       -d "${APP_DOMAIN:?set APP_DOMAIN in .env - see .env.example}"
+    logging: *default-logging
 
 volumes:
   data-db-prod:
