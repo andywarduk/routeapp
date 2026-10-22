@@ -20,6 +20,11 @@ router.route('/strava/route/:id').get(
         const { access_token } = req.user.auth
         const { id } = req.params
 
+        if (!/^\d+$/.test(id)) {
+          response.errorMsgResponse(res, 400, 'Invalid route id')
+          return
+        }
+
         const route = await stravaApi.getRoute(access_token, id)
 
         res.json(route)
