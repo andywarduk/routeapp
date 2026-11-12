@@ -7,7 +7,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+# tsc needs ~300MB of heap, above V8's default limit on the 412MB prod box
+RUN NODE_OPTIONS=--max-old-space-size=512 npm run build
 
 
 # Production
