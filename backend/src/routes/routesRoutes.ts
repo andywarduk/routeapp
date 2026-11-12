@@ -190,9 +190,7 @@ router.route('/routes/:id/polyLine').get(
 
       const doc = await Routes.findOne({
         routeid: parseInt(id)
-      }, {
-        'map.polyline': 1
-      }).exec()
+      }, 'map.polyline').exec()
 
       if (doc) {
         res.json(doc.map.polyline)
@@ -217,9 +215,7 @@ router.route('/routes/:id/summaryPolyLine').get(
 
       const doc = await Routes.findOne({
         routeid: parseInt(id)
-      }, {
-        'map.summary_polyline': 1
-      }).exec()
+      }, 'map.summary_polyline').exec()
 
       if (doc) {
         res.json(doc.map.summary_polyline)
